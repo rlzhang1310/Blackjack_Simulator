@@ -1,13 +1,11 @@
-from deck import Hand
-
+from deck import BlackjackShoe
+from hand import Hand
 class Dealer:
     def __init__(self, hit_on_soft_17, hand):
         self.hit_on_soft_17 = hit_on_soft_17
         self.hand = hand
-        self.hidden_card = hand[0]  # The dealer's first card is hidden
-        self.shown_card = hand[1]   # The dealer's second card is shown
 
-    def deal(self, deck):
+    def dealer_turn(self, shoedeck: BlackjackShoe) -> int:
         """
         Dealer's logic for hitting or standing based on the rules.
         """
@@ -20,9 +18,11 @@ class Dealer:
                 break  # Dealer stands
 
             # Dealer hits if total is less than 17 or it's a soft 17 and hit_on_soft_17 is True
-            new_card = deck.deal()  # Draw a new card from the deck
+            new_card = shoedeck.deal_card()  # Draw a new card from the deck
             self.hand.add_card(new_card)  # Add the new card to the dealer's hand
 
             # If the new card causes the dealer to bust, break the loop
             if self.hand.evaluate() > 21:
                 break
+
+        return self.hand.evaluate()
