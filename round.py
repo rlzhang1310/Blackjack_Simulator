@@ -1,6 +1,8 @@
 from deck import BlackjackShoe
 from dealer import Dealer
 from hand import Hand
+from player import Player
+from strategies.strategy import StrategyTable
 
 class BlackjackRound:
     def __init__(self, shoe: BlackjackShoe, num_players: int = 1):
@@ -12,7 +14,7 @@ class BlackjackRound:
         self.num_players = num_players
         
         # Store each player's hand as a list of (rank, suit)
-        self.players = [Hand() for _ in range(num_players)]
+        self.players = [Player(name=f"Player {i}", strategy=StrategyTable["MULTIDECK"], bankroll=1000, hands=[Hand()]) for i in range(num_players)]
         # Dealer's hand
         self.dealer = Dealer(hit_on_soft_17=True, hand=Hand())
 
@@ -23,7 +25,7 @@ class BlackjackRound:
         """Deal 2 cards to each player, then 2 cards to the dealer."""
         for _ in range(2):
             for i in range(self.num_players):
-                self.players[i].add_card(self.shoe.deal_card())
+                self.players[i].hands[0].add_card(self.shoe.deal_card())
             self.dealer.hand.add_card(self.shoe.deal_card())
 
         self.print_round()
@@ -32,12 +34,15 @@ class BlackjackRound:
             self.shoe = BlackjackShoe.create_shoe(self.num_decks)
             BlackjackShoe.shuffle_shoe(self.shoe)
             self.deal_index = 0
+
     def print_round(self):
         for i in range(self.num_players):
-            print(f"\nPlayer {i+1} cards:")
-            self.players[i].print_hand()
+            print(f"\n{self.players[i].name}'s cards:")
+            for hand in self.players[i].hands:
+                hand.print_hand()
         print("\nDealer cards:")
         self.dealer.hand.print_hand()
+
     def play_round(self):
         """
         Plays out the round:
@@ -47,8 +52,9 @@ class BlackjackRound:
         Returns a list of outcome strings or any data structure you prefer.
         """
         # Players take their turns
+        dealer_upcard = self.dealer.hand.cards[1]
         for i in range(self.num_players):
-            self._player_turn(i)
+            self._player_turn(self.players[i], dealer_upcard)
 
         # Dealer takes turn
         self.dealer.dealer_turn(self.shoe)
@@ -57,38 +63,103 @@ class BlackjackRound:
         results = self._evaluate_round()
         return results
 
-    def _player_turn(self, player_index):
+    def _player_turn(self, player, dealer_upcard, hand_index=0):
         """
-        Simple (naive) strategy for the player:
-        - Keep hitting until hand value >= 17
+        Allow the player to act on each of their hands in sequence (handling splits).
+        'player.hands' is a list of Hand objects. 
         """
-        while self.players[player_index].evaluate() < 17:
-            self.players[player_index].add_card(self.shoe.deal_card())
+        # We'll process each hand in the player's list of hands
+        while hand_index < len(player.hands):
+            hand = player.hands[hand_index]
+            print(f"\n{player.name}'s actions for hand {hand_index+1}:")
+            # Continue acting on this hand until the player stands, busts, or doubles
+            while True:
+                # If the hand is already busted or has 21, no more actions
+                if hand.is_busted() or hand.value == 21:
+                    break
+
+                # Ask the player's strategy for an action
+                action = player.get_action(hand, dealer_upcard)
+                print(action)
+                if action == "HIT":
+                    # Deal one card to the current hand
+                    hand.add_card(self.shoe.deal_card())
+                    
+                    # If the hand busts, we end this hand's loop
+                    if hand.is_busted():
+                        break
+
+                elif action == "STAND":
+                    # Player stops acting on this hand
+                    break
+
+                elif action == "DOUBLE":
+                    # Deal exactly one more card, then the hand is done
+                    hand.add_card(self.shoe.deal_card())
+                    #[TODO]: Implement the 'double' action
+                    break
+
+                elif action == "SPLIT":
+                    # Handle splitting (the hand must have exactly 2 cards of same rank)
+                    second_card = hand.cards.pop()  # Now 'hand' has just 1 card
+
+                    # Create a new Hand with that second card
+                    new_hand = Hand([second_card])
+
+                    # Deal one new card to each split hand
+                    hand.add_card(self.shoe.deal_card())
+                    new_hand.add_card(self.shoe.deal_card())
+
+                    # Append the new hand to the player's list
+                    player.hands.append(new_hand)
+                    continue
+
+                else:
+                    # Fallback if no recognized action
+                    break
+
+            # Move to the next hand in the list
+            hand_index += 1
 
     def _evaluate_round(self):
         """
-        Compare each player's final hand to the dealer's hand
+        Compare each player's final hands to the dealer's hand
         and return a summary of outcomes.
         """
+        # Evaluate the dealer's final total
         dealer_total = self.dealer.hand.evaluate()
         dealer_bust = dealer_total > 21
 
         outcomes = []
-        for i, hand in enumerate(self.players):
-            player_total = hand.evaluate()
-            player_bust = player_total > 21
+        # Iterate through each player
+        for i, player in enumerate(self.players, start=1):
+            # Each player could have multiple hands (due to splits, etc.)
+            for j, hand in enumerate(player.hands, start=1):
+                player_total = hand.evaluate()
+                player_bust = player_total > 21
 
-            if player_bust:
-                outcomes.append(f"Player {i+1} busts with {player_total}. Dealer wins.")
-            elif dealer_bust:
-                outcomes.append(f"Dealer busts with {dealer_total}. Player {i+1} wins.")
-            else:
-                # Neither bust
-                if player_total > dealer_total:
-                    outcomes.append(f"Player {i+1} wins with {player_total} > {dealer_total}.")
-                elif player_total < dealer_total:
-                    outcomes.append(f"Dealer wins with {dealer_total} > {player_total}.")
+                if player_bust:
+                    outcomes.append(
+                        f"Player {i} Hand {j} busts with {player_total}. Dealer wins."
+                    )
+                elif dealer_bust:
+                    outcomes.append(
+                        f"Dealer busts with {dealer_total}. Player {i} Hand {j} wins."
+                    )
                 else:
-                    outcomes.append(f"Push! Player {i+1} ties dealer at {player_total}.")
+                    # Neither bust
+                    if player_total > dealer_total:
+                        outcomes.append(
+                            f"Player {i} Hand {j} wins with {player_total} > {dealer_total}."
+                        )
+                    elif player_total < dealer_total:
+                        outcomes.append(
+                            f"Dealer wins with {dealer_total} > {player_total}."
+                        )
+                    else:
+                        outcomes.append(
+                            f"Push! Player {i} Hand {j} ties dealer at {player_total}."
+                        )
 
         return outcomes
+
