@@ -53,6 +53,19 @@ class BlackjackRound:
         """
         # Players take their turns
         dealer_upcard = self.dealer.hand.cards[1]
+
+        # offer insurance if the dealer has potential for blackjack
+        if dealer_upcard.rank in ["A", "10", "J", "Q", "K"]:
+            for i in range(self.num_players):
+                self.players[i].insurance_bet(0)
+            if self.dealer.hand.is_blackjack():
+                results = []
+                for i in range(self.num_players):
+                    if not self.players[i].hands[0].is_blackjack():
+                        results.append(f"Player {i} loses, dealer has blackjack")
+                    else:
+                        results.append(f"Player {i} pushes with blackjack")
+                return results
         for i in range(self.num_players):
             self._player_turn(self.players[i], dealer_upcard)
 
@@ -74,20 +87,19 @@ class BlackjackRound:
             print(f"\n{player.name}'s actions for hand {hand_index+1}:")
             # Continue acting on this hand until the player stands, busts, or doubles
             while True:
-                # If the hand is already busted or has 21, no more actions
-                if hand.is_busted() or hand.value == 21:
-                    break
 
                 # Ask the player's strategy for an action
                 action = player.get_action(hand, dealer_upcard)
                 print(action)
-                if action == "HIT":
+                if action == "BUST":
+                    break
+                
+                elif action == "BLACKJACK":
+                    break
+
+                elif action == "HIT":
                     # Deal one card to the current hand
                     hand.add_card(self.shoe.deal_card())
-                    
-                    # If the hand busts, we end this hand's loop
-                    if hand.is_busted():
-                        break
 
                 elif action == "STAND":
                     # Player stops acting on this hand

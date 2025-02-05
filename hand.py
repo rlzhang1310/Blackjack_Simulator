@@ -1,6 +1,6 @@
 
 class Hand:
-    def __init__(self, cards=None):
+    def __init__(self, cards=None, bet: int=0):
         """
         Initialize a Hand with an optional initial list of cards.
         Each card is expected to have a `.rank` attribute, e.g. "A", "K", "10", etc.
@@ -11,11 +11,12 @@ class Hand:
         # These will be set by self.evaluate() below
         self.value = 0
         self.soft = False  # Indicates if at least one Ace is counted as 11
-
         # Evaluate the hand right away if there are initial cards
         if self.cards:
             self.evaluate()
 
+        self.insurance_bet = 0
+        self.bet = bet
     def evaluate(self):
         """
         Calculates and updates:
@@ -67,6 +68,12 @@ class Hand:
         """
         return self.value > 21
 
+    def is_blackjack(self):
+        """
+        Returns True if the hand contains exactly two cards and has a total of 21.
+        """
+        return len(self.cards) == 2 and self.value == 21
+    
     def clear(self):
         """
         Clears the hand of all cards and resets value/soft status.
@@ -74,6 +81,9 @@ class Hand:
         self.cards = []
         self.value = 0
         self.soft = False
+
+    def put_insurance_bet(self, bet):
+        self.insurance_bet = bet
 
     def print_hand(self):
         """

@@ -21,12 +21,15 @@ class Player:
         Determine whether to HIT, STAND, DOUBLE, or SPLIT using the strategy tables.
         :param hand: Hand object (with hand.value, hand.soft, hand.cards).
         :param dealer_card: A Card object representing the dealer's upcard.
-        :return: A string in ["HIT", "STAND", "DOUBLE", "SPLIT"]
+        :return: A string in ["HIT", "STAND", "DOUBLE", "SPLIT", "BUST", "BLACKJACK"  ]
         """
         # Quick checks
-        if hand.is_busted() or hand.value >= 21:
-            return "STAND"  # no more actions needed
-
+        if hand.is_busted():
+            return "BUST" 
+        
+        if hand.is_blackjack():
+            return "BLACKJACK"
+        
         # Dealer upcard as integer (2..11)
         up_val = dealer_upcard_value(dealer_card)
 
@@ -173,6 +176,13 @@ class Player:
             return "SPLIT"
         return "HIT"  # fallback
 
+
+    def insurance_bet(self, bet):
+        """ default no insurance bet until we implement card count"""
+        # [TODO]: Implement card counting
+        if False:
+            self.hand.put_insurance_bet(bet)
+        return
 def dealer_upcard_value(card):
     """Convert the dealer's upcard rank into a numeric value for strategy lookup."""
     rank = card.rank
