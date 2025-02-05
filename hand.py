@@ -17,6 +17,7 @@ class Hand:
 
         self.insurance_bet = 0
         self.bet = bet
+        self.hand_status = "ACTIVE"
     def evaluate(self):
         """
         Calculates and updates:
@@ -66,14 +67,32 @@ class Hand:
         """
         Returns True if the hand's total value exceeds 21.
         """
-        return self.value > 21
+        if self.value > 21:
+            self.hand_status = "BUST"
+            return True
+        return False
 
     def is_blackjack(self):
         """
         Returns True if the hand contains exactly two cards and has a total of 21.
         """
-        return len(self.cards) == 2 and self.value == 21
+        if len(self.cards) == 2 and self.value == 21:
+            self.hand_status = "BLACKJACK"
+            return True
+        return False
     
+    def lost(self):
+        self.hand_status = "LOST"
+        
+    def won(self):
+        self.hand_status = "WON"
+    
+    def push(self):
+        self.hand_status = "PUSH"
+
+    def blackjack_win(self):
+        self.hand_status = "BLACKJACK WIN"
+
     def clear(self):
         """
         Clears the hand of all cards and resets value/soft status.
@@ -81,10 +100,27 @@ class Hand:
         self.cards = []
         self.value = 0
         self.soft = False
+        self.insurance_bet = 0
+        self.hand_status = "ACTIVE"
+        self.bet = 0
 
     def put_insurance_bet(self, bet):
         self.insurance_bet = bet
 
+    def put_initial_bet(self, bet):
+        self.bet = bet
+
+    def double_down(self):
+        self.bet *= 2
+
+    def split(self):
+        second_card = self.cards.pop()  # Now 'hand' has just 1 card
+        # Create a new Hand with that second card
+        new_hand = Hand([second_card])
+        new_hand.bet = self.bet
+        new_hand.hand_status = "ACTIVE"
+        return new_hand
+    
     def print_hand(self):
         """
         Prints the hand in a human-readable format, showing:

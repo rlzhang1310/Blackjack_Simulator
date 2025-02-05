@@ -176,13 +176,17 @@ class Player:
             return "SPLIT"
         return "HIT"  # fallback
 
-
     def insurance_bet(self, bet):
         """ default no insurance bet until we implement card count"""
         # [TODO]: Implement card counting
         if False:
-            self.hand.put_insurance_bet(bet)
+            self.hands[0].put_insurance_bet(bet)
         return
+    
+    def put_bet_on_initial_hand(self, bet):
+        # [TODO]: Implement card counting
+        self.hands[0].put_initial_bet(bet)
+
 def dealer_upcard_value(card):
     """Convert the dealer's upcard rank into a numeric value for strategy lookup."""
     rank = card.rank
