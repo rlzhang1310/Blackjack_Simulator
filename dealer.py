@@ -31,3 +31,6 @@ class Dealer:
                 break
 
         return self.hand.evaluate(), result
+    
+    def new_hand(self):
+        self.hand = Hand()

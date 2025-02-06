@@ -35,6 +35,7 @@ def create_shoe(num_decks=8):
     shoe = []
     for _ in range(num_decks):
         shoe.extend(create_single_deck())
+    shuffle_shoe(shoe)
     return shoe
 
 def shuffle_shoe(shoe):

@@ -1,3 +1,4 @@
+from hand import Hand
 
 class Player:
     """
@@ -186,6 +187,9 @@ class Player:
     def put_bet_on_initial_hand(self, bet):
         # [TODO]: Implement card counting
         self.hands[0].put_initial_bet(bet)
+
+    def new_hand(self):
+        self.hands = [Hand()]
 
 def dealer_upcard_value(card):
     """Convert the dealer's upcard rank into a numeric value for strategy lookup."""
