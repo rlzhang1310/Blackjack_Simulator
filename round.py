@@ -5,7 +5,7 @@ from player import Player
 from strategies.strategy import StrategyTable
 
 class BlackjackRound:
-    def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False):
+    def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False, resplit_till=4):
         """
         Simulates a single round of blackjack with `num_players` players,
         using the provided `shoe` for card dealing.
@@ -16,8 +16,9 @@ class BlackjackRound:
         # Dealer's hand
         self.dealer = dealer
         self.blackjack_payout = blackjack_payout
+        self.resplit_till = resplit_till
         self.dealer_profit = 0
-        self.print_cards = print_cards
+        self._print_cards = print_cards
         # Deal initial 2 cards to each player, then 2 to the dealer
         self._deal_initial_cards()
 
@@ -27,7 +28,7 @@ class BlackjackRound:
             for player in self.players:
                 player.hands[0].add_card(self.shoe.deal_card())
             self.dealer.hand.add_card(self.shoe.deal_card())
-        if self.print_cards:
+        if self._print_cards:
             self.print_cards()
 
 
@@ -41,7 +42,9 @@ class BlackjackRound:
         """
         # Players take their turns
         dealer_upcard = self.dealer.hand.cards[1]
-
+        if self._print_cards:
+            print("=== Dealer Card ===")
+            print(dealer_upcard)
         # offer insurance if the dealer has potential for blackjack
         if dealer_upcard.rank in ["A", "10", "J", "Q", "K"]:
             for player in self.players:
@@ -65,8 +68,10 @@ class BlackjackRound:
         # Dealer takes turn
         self.dealer.dealer_turn(self.shoe)
         results = self._evaluate_round()
-        if self.print_cards:
+        if self._print_cards:
             self.print_cards()
+            print("=== Dealer's Cards ===")
+            self.dealer.hand.print_hand()
         # Evaluate results
         return results
 
@@ -78,14 +83,14 @@ class BlackjackRound:
         # We'll process each hand in the player's list of hands
         while hand_index < len(player.hands):
             hand = player.hands[hand_index]
-            if self.print_cards:
+            if self._print_cards:
                 print(f"\n{player.name}'s actions for hand {hand_index+1}:")
             # Continue acting on this hand until the player stands, busts, or doubles
             while True:
 
                 # Ask the player's strategy for an action
-                action = player.get_action(hand, dealer_upcard)
-                if self.print_cards:
+                action = player.get_action(hand, dealer_upcard, self.resplit_till)
+                if self._print_cards:
                     print(action)
                 if action == "BUST":
                     hand.lost()
@@ -128,7 +133,6 @@ class BlackjackRound:
 
             # Move to the next hand in the list
             hand_index += 1
-
     def _evaluate_round(self):
         """
         Compare each player's final hands to the dealer's hand
@@ -151,6 +155,7 @@ class BlackjackRound:
                     player_earnings -= hand.bet
                     dealer_earnings += hand.bet
                 elif hand.hand_status == "BLACKJACK WIN":
+                    outcomes.append(f"{player.name} Hand {j} has BLACKJACK")
                     payout = round(hand.bet * self.blackjack_payout) # should always be an int
                     player_earnings += payout  
                     dealer_earnings -= payout
@@ -174,6 +179,12 @@ class BlackjackRound:
                         else:
                             hand.push()
                             outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
+                elif hand.hand_status == "PUSH":
+                    outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
+                else:
+                    print(f"Unexpected hand status: {hand.hand_status}")
+                    i = 1 / 0
+                    return i
             outcomes.append(f"{player.name} earned ${player_earnings}.")
             player.bankroll += player_earnings
         outcomes.append(f"Dealer earned ${dealer_earnings}.")
@@ -185,5 +196,3 @@ class BlackjackRound:
             print(f"\n{player.name}'s cards:")
             for hand in player.hands:
                 hand.print_hand()
-        print("\nDealer cards:")
-        self.dealer.hand.print_hand()

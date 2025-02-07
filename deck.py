@@ -40,22 +40,26 @@ def create_shoe(num_decks=8):
 
 def shuffle_shoe(shoe):
     """Fisher-Yates (Knuth) shuffle in-place."""
-    random.shuffle(shoe)
-    return shoe
+    # random.shuffle(shoe)
+    # return shoe
+    n = len(shoe)
+    for i in range(n - 1, 0, -1):
+        j = random.randint(0, i)
+        shoe[i], shoe[j] = shoe[j], shoe[i]
 
 
 class BlackjackShoe:
     def __init__(self, num_decks=8, cut_index=None):
         self.num_decks = num_decks
         if cut_index is None:
-            leftover_decks = random.uniform(1.3, 1.7)
+            leftover_decks = random.uniform(1, 2)
             self.cut_index = 416 - round(52 * leftover_decks)
         else:
             self.cut_index = cut_index   
         # Initialize and shuffle right away
         self.reshuffle_needed = False
-        self.shoe = create_shoe(self.num_decks)
-        shuffle_shoe(self.shoe)
+        self.cards = create_shoe(self.num_decks)
+        # self.cards = shuffle_shoe(self.cards)
         # Place the cut card
         self.deal_index = 0  # How many cards we've dealt so far
 
@@ -64,11 +68,10 @@ class BlackjackShoe:
         Deals one card from the shoe. 
         If we pass the cut card, we note that we should reshuffle soon.
         """
-        if self.deal_index >= len(self.shoe) or self.deal_index >= self.cut_index:
-            # Shoe is empty, definitely reshuffle
+        if self.deal_index >= len(self.cards) or self.deal_index >= self.cut_index:
             self.reshuffle_needed = True
 
-        card = self.shoe[self.deal_index]
+        card = self.cards[self.deal_index]
         self.deal_index += 1
 
         return card

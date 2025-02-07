@@ -17,7 +17,7 @@ class Player:
         self.bankroll = bankroll
 
 
-    def get_action(self, hand, dealer_card):
+    def get_action(self, hand, dealer_card, resplit_till):
         """
         Determine whether to HIT, STAND, DOUBLE, or SPLIT using the strategy tables.
         :param hand: Hand object (with hand.value, hand.soft, hand.cards).
@@ -35,7 +35,7 @@ class Player:
         up_val = dealer_upcard_value(dealer_card)
 
         # If 2 cards and pair
-        if len(hand.cards) == 2 and self._is_pair(hand):
+        if len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till:
             action = self._pair_action(hand, up_val)
             if action:
                 return action  # if the strategy says "Split" or "Stand" or something
@@ -54,9 +54,9 @@ class Player:
 
         ranks = [card.rank for card in hand.cards]
         # Check if both are 10/J/Q/K
-        if (ranks[0] in ["10", "J", "Q", "K"] 
-                and ranks[1] in ["10", "J", "Q", "K"]):
-            return True
+        # if (ranks[0] in ["10", "J", "Q", "K"] 
+        #         and ranks[1] in ["10", "J", "Q", "K"]):
+        #     return True
         return (ranks[0] == ranks[1])
 
     def _pair_action(self, hand, dealer_up_val):
@@ -191,6 +191,11 @@ class Player:
     def new_hand(self):
         self.hands = [Hand()]
 
+    def print_hands(self):
+        print("--------------------")
+        for hand in self.hands:
+            print(hand.print_hand())
+        print("--------------------")
 def dealer_upcard_value(card):
     """Convert the dealer's upcard rank into a numeric value for strategy lookup."""
     rank = card.rank
