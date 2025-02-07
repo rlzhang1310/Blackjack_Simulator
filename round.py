@@ -160,7 +160,12 @@ class BlackjackRound:
                     player_earnings += payout  
                     dealer_earnings -= payout
                 elif hand.hand_status == "ACTIVE":
-                    if dealer_bust:
+                    if player_total > 21:
+                        hand.lost()
+                        outcomes.append(f"{player.name} Hand {j} busts with {player_total}. Dealer wins.")
+                        player_earnings -= hand.bet
+                        dealer_earnings += hand.bet
+                    elif dealer_bust:
                         hand.won()
                         outcomes.append(f"{player.name} Hand {j} wins with {player_total}. Dealer busts with {dealer_total}.")
                         player_earnings += hand.bet

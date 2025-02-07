@@ -19,7 +19,7 @@ class Game:
         self.blackjack_payout = blackjack_payout
         self.min_bet = min_bet
         self.denominations = denominations
-        self.house_bankroll = min_bet * 10000
+        self.house_bankroll = 0
         # [TODO] implement total number of splits
 
     def play(self, games=10, print_round_results=False, print_cards=False):

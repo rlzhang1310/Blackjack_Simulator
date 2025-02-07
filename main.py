@@ -12,26 +12,22 @@ if __name__ == "__main__":
     # data = game.play(100000, print_cards=False)
 
     # print(sns.displot(data, kind="kde"))
-    game = Game(1, num_players=1, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=10, denominations=10, player_bankroll=0)
-    shoe = game.shoe 
-    for c in shoe.cards:
-        print(c)
-    print(len(shoe.cards))
-    # rounds = []
-    # games = []  
-    # num_players = 5
-    # num_games = 1
-    # bet_size = 100
-    # num_rounds = 10
-    # for _ in range(num_games):
-    #     game = Game(8, num_players=num_players, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=False, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=bet_size, denominations=10, player_bankroll=0)
-    #     round_data = game.play(num_rounds, print_cards=True, print_round_results=True)
-    #     rounds.extend(round_data)
-    #     games.append(game.house_bankroll - bet_size * 10000)
 
-    # sum = 0
-    # for g in games:
-    #     sum += g
-    # print(sum)
+    rounds = []
+    games = []  
+    num_players = 5
+    num_games = 1
+    bet_size = 100
+    num_rounds = 10
+    for _ in range(num_games):
+        game = Game(8, num_players=num_players, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=False, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=bet_size, denominations=10, player_bankroll=0)
+        round_data = game.play(num_rounds, print_cards=True, print_round_results=True)
+        rounds.extend(round_data)
+        games.append(game.house_bankroll - bet_size * 10000)
 
-    # print(sum / num_players / num_games / num_rounds)
+    sum = 0
+    for g in games:
+        sum += g
+    print(sum)
+
+    print(sum / num_players / num_games / num_rounds)
