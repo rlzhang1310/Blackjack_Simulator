@@ -3,6 +3,7 @@ from dealer import Dealer
 from hand import Hand
 from player import Player
 from strategies.strategy import StrategyTable
+from collections import defaultdict
 
 class BlackjackRound:
     def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False, resplit_till=4):
@@ -19,7 +20,13 @@ class BlackjackRound:
         self.resplit_till = resplit_till
         self.dealer_profit = 0
         self._print_cards = print_cards
-        # Deal initial 2 cards to each player, then 2 to the dealer
+
+        ########################################################################
+        # BUSTING DEBUGGING VARIABLES
+        # self.blackjack_counter = 0
+        # self.bust_dict = defaultdict(int)
+        # self.total_dict = defaultdict(int)
+
         self._deal_initial_cards()
 
     def _deal_initial_cards(self):
@@ -45,10 +52,12 @@ class BlackjackRound:
         if self._print_cards:
             print("=== Dealer Card ===")
             print(dealer_upcard)
+
         # offer insurance if the dealer has potential for blackjack
         if dealer_upcard.rank in ["A", "10", "J", "Q", "K"]:
             for player in self.players:
                 player.insurance_bet(0)
+            self.dealer.hand.evaluate()
             if self.dealer.hand.is_blackjack():
                 results = []
                 for player in self.players:
@@ -58,6 +67,7 @@ class BlackjackRound:
                         results.append(f"{player.name} loses, dealer has blackjack")
                     else:
                         players_hand.push()
+                        # self.blackjack_counter += 1
                         results.append(f"{player.name} pushes with blackjack")
                 res = self._evaluate_round()
                 results.extend(res)
@@ -68,6 +78,16 @@ class BlackjackRound:
         # Dealer takes turn
         self.dealer.dealer_turn(self.shoe)
         results = self._evaluate_round()
+
+        ########################################################################
+        # BUSTING DEBUGGING CODE
+        # bust_rank = dealer_upcard.rank
+        # if bust_rank in ["10", "J", "Q", "K"]:
+        #     bust_rank = "10"
+        # self.total_dict[bust_rank] += 1
+        # if self.dealer.hand.evaluate() > 21:
+        #     self.bust_dict[bust_rank] += 1
+
         if self._print_cards:
             self.print_cards()
             print("=== Dealer's Cards ===")
@@ -97,6 +117,7 @@ class BlackjackRound:
                     break
                 
                 elif action == "BLACKJACK":
+                    # self.blackjack_counter += 1
                     hand.blackjack_win()
                     break
 
@@ -155,10 +176,16 @@ class BlackjackRound:
                     player_earnings -= hand.bet
                     dealer_earnings += hand.bet
                 elif hand.hand_status == "BLACKJACK WIN":
-                    outcomes.append(f"{player.name} Hand {j} has BLACKJACK")
-                    payout = round(hand.bet * self.blackjack_payout) # should always be an int
-                    player_earnings += payout  
-                    dealer_earnings -= payout
+                    # Player does not win blackjack bonus for split hands
+                    if len(player.hands) > 1:
+                        outcomes.append(f"{player.name} Hand {j} has BLACKJACK with split hands")
+                        player_earnings += hand.bet  
+                        dealer_earnings -= hand.bet
+                    else:
+                        outcomes.append(f"{player.name} Hand {j} has BLACKJACK")
+                        payout = round(hand.bet * self.blackjack_payout) # should always be an int
+                        player_earnings += payout  
+                        dealer_earnings -= payout
                 elif hand.hand_status == "ACTIVE":
                     if player_total > 21:
                         hand.lost()

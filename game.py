@@ -4,6 +4,7 @@ from hand import Hand
 from player import Player
 from strategies.strategy import StrategyTable
 from round import BlackjackRound
+from collections import defaultdict
 
 BLACKJACKTHREETOTWOPAYOUT = 1.5
 BLACKJACKSIXTOFIVEPAYOUT = 1.2
@@ -24,7 +25,11 @@ class Game:
 
     def play(self, games=10, print_round_results=False, print_cards=False):
         data_collector = []
-        for _ in range(games):
+
+        # bust = defaultdict(int) # dictionary to keep track of number of times a dealer busts
+        # total = defaultdict(int) # dictionary to keep track of number of times a dealer showed a suit
+        # blackjacks = 0  # Counter for number of blackjacks in the game
+        for i in range(games):
             for player in self.players:
                 player.new_hand()
                 player.put_bet_on_initial_hand(self.min_bet)
@@ -39,10 +44,20 @@ class Game:
                 print("=== Blackjack Round Results ===")
                 for outcome in results:
                     print(outcome)
+            # blackjacks += round.blackjack_counter
+            # for key, value in round.bust_dict.items():
+            #     bust[key] += value
+            # for key, value in round.total_dict.items():
+            #     total[key] += value
+
         
         print(f"=== Results After {games} Games ===")
         for player in self.players:
             print(f"{player.name}: ${player.bankroll}")
         print(f"House Bankroll: ${self.house_bankroll}")
         print(f"Cards Left: {self.shoe.cut_index - self.shoe.deal_index}")
+        # print(f"Player Blackjacks: {blackjacks / games}")
+        # print(f"bust percentage for each rank")
+        # for rank in sorted(total.keys()):
+        #     print(f"{rank}: {bust[rank] / total[rank]}")
         return data_collector
