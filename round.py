@@ -4,9 +4,10 @@ from hand import Hand
 from player import Player
 from strategies.strategy import StrategyTable
 from collections import defaultdict
+from counter import Counter
 
 class BlackjackRound:
-    def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False, resplit_till=4):
+    def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False, resplit_till=4, counter: Counter=None):
         """
         Simulates a single round of blackjack with `num_players` players,
         using the provided `shoe` for card dealing.
@@ -20,7 +21,7 @@ class BlackjackRound:
         self.resplit_till = resplit_till
         self.dealer_profit = 0
         self._print_cards = print_cards
-
+        self.counter = counter
         ########################################################################
         # BUSTING DEBUGGING VARIABLES
         # self.blackjack_counter = 0
@@ -31,10 +32,13 @@ class BlackjackRound:
 
     def _deal_initial_cards(self):
         """Deal 2 cards to each player, then 2 cards to the dealer."""
-        for _ in range(2):
+        for i in range(2):
             for player in self.players:
-                player.hands[0].add_card(self.shoe.deal_card())
-            self.dealer.hand.add_card(self.shoe.deal_card())
+                card = self.shoe.deal_card()
+                player.hands[0].add_card(card)
+                self.counter.update_count(card)
+            card = self.shoe.deal_card()
+            self.dealer.hand.add_card(card)
         if self._print_cards:
             self.print_cards()
 
@@ -49,17 +53,19 @@ class BlackjackRound:
         """
         # Players take their turns
         dealer_upcard = self.dealer.hand.cards[1]
+        self.counter.update_count(dealer_upcard)
         if self._print_cards:
             print("=== Dealer Card ===")
             print(dealer_upcard)
-
+        results = []
         # offer insurance if the dealer has potential for blackjack
         if dealer_upcard.rank in ["A", "10", "J", "Q", "K"]:
+            true_count = self.get_estimated_true_count()
             for player in self.players:
-                player.insurance_bet(0)
+                player.insurance_bet(true_count)
             self.dealer.hand.evaluate()
             if self.dealer.hand.is_blackjack():
-                results = []
+                self.counter.update_count(self.dealer.hand.cards[1])
                 for player in self.players:
                     players_hand = player.hands[0]
                     if not player.hands[0].is_blackjack():
@@ -76,8 +82,9 @@ class BlackjackRound:
             self._player_turn(player, dealer_upcard)
 
         # Dealer takes turn
-        self.dealer.dealer_turn(self.shoe)
-        results = self._evaluate_round()
+        self.dealer.dealer_turn(self.shoe, self.counter)
+        results.extend(self._evaluate_insurance())
+        results.extend(self._evaluate_round())
 
         ########################################################################
         # BUSTING DEBUGGING CODE
@@ -123,7 +130,9 @@ class BlackjackRound:
 
                 elif action == "HIT":
                     # Deal one card to the current hand
-                    hand.add_card(self.shoe.deal_card())
+                    card = self.shoe.deal_card()
+                    hand.add_card(card)
+                    self.counter.update_count(card)
 
                 elif action == "STAND":
                     # Player stops acting on this hand
@@ -131,9 +140,10 @@ class BlackjackRound:
 
                 elif action == "DOUBLE":
                     # Deal exactly one more card, then the hand is done
-                    hand.add_card(self.shoe.deal_card())
+                    card = self.shoe.deal_card()
+                    hand.add_card(card)
+                    self.counter.update_count(card)
                     hand.double_down()
-                    #[TODO]: Implement the 'double' action
                     break
 
                 elif action == "SPLIT":
@@ -141,8 +151,12 @@ class BlackjackRound:
                     new_hand = hand.split()
 
                     # Deal one new card to each split hand
-                    hand.add_card(self.shoe.deal_card())
-                    new_hand.add_card(self.shoe.deal_card())
+                    card_1 = self.shoe.deal_card()
+                    card_2 = self.shoe.deal_card()
+                    hand.add_card(card_1)
+                    new_hand.add_card(card_2)
+                    self.counter.update_count(card_1)
+                    self.counter.update_count(card_2)
 
                     # Append the new hand to the player's list
                     player.hands.append(new_hand)
@@ -222,6 +236,32 @@ class BlackjackRound:
         outcomes.append(f"Dealer earned ${dealer_earnings}.")
         self.dealer_profit += dealer_earnings  # Update the dealer's profit after the round ends
         return outcomes
+    
+    def _evaluate_insurance(self):
+        results = []
+        for player in self.players:
+            if player.hands[0].insurance_bet > 0:
+                if self.dealer.hand.is_blackjack():
+                    player.bankroll += player.hands[0].insurance_bet * 2
+                    self.dealer_profit -= player.hands[0].insurance_bet * 2
+                    results.append(f"{player.name} wins insurance bet")
+                else:
+                    player.bankroll -= player.hands[0].insurance_bet
+                    self.dealer_profit += player.hands[0].insurance_bet
+                    results.append(f"{player.name} loses insurance bet")
+        return results
+    
+    def track_high_low_count(self, card):
+        """Implement high low count"""
+        if card.rank in ["2", "3", "4", "5", "6"]:
+            self.high_low_count += 1
+        elif card.rank in ["10", "J", "Q", "K", "A"]:
+            self.high_low_count -= 1
+
+    def get_estimated_true_count(self):
+        """Implement high low count"""
+        decks_left = self.shoe.decks_left()
+        return self.counter.get_high_low_count() / decks_left
     
     def print_cards(self):
         for player in self.players:

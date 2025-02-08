@@ -4,7 +4,7 @@ class Player:
     """
     A Blackjack Player with a specific strategy.
     """
-    def __init__(self, name, strategy, bankroll, hands):
+    def __init__(self, name, strategy, bankroll, hands, min_bet=10, denominations=10):
         """
         :param name: A string to identify this player
         :param strategy: An object implementing .get_action(hand, dealer_card)
@@ -15,7 +15,8 @@ class Player:
         self.soft_strategy = strategy["SOFT"]
         self.hard_strategy = strategy["HARD"]
         self.bankroll = bankroll
-
+        self.min_bet = min_bet
+        self.denominations = denominations
 
     def get_action(self, hand, dealer_card, resplit_till):
         """
@@ -177,10 +178,11 @@ class Player:
             return "SPLIT"
         return "HIT"  # fallback
 
-    def insurance_bet(self, bet):
-        """ default no insurance bet until we implement card count"""
-        # [TODO]: Implement card counting
-        if False:
+    def insurance_bet(self, true_count):
+        if true_count >= 3:
+            bet = self.hands[0].bet
+            # print("TOOK INSURANCE")
+            # print("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
             self.hands[0].put_insurance_bet(bet)
         return
     
@@ -196,6 +198,8 @@ class Player:
         for hand in self.hands:
             print(hand.print_hand())
         print("--------------------")
+
+
 def dealer_upcard_value(card):
     """Convert the dealer's upcard rank into a numeric value for strategy lookup."""
     rank = card.rank

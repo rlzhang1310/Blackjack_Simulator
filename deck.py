@@ -52,8 +52,8 @@ class BlackjackShoe:
     def __init__(self, num_decks=8, cut_index=None):
         self.num_decks = num_decks
         if cut_index is None:
-            leftover_decks = random.uniform(1, 2)
-            self.cut_index = 416 - round(52 * leftover_decks)
+            leftover_decks = random.uniform(1.2, 2)
+            self.cut_index = num_decks * 52 - round(52 * leftover_decks)
         else:
             self.cut_index = cut_index   
         # Initialize and shuffle right away
@@ -63,6 +63,14 @@ class BlackjackShoe:
         # Place the cut card
         self.deal_index = 0  # How many cards we've dealt so far
 
+    def decks_left(self):
+        """
+        Return the number of decks left in the shoe.
+        """
+        remaining_decks = (self.num_decks * 52 - self.deal_index) // 52
+        rounded_decks = round(remaining_decks * 2) / 2
+        return rounded_decks
+    
     def deal_card(self):
         """
         Deals one card from the shoe. 

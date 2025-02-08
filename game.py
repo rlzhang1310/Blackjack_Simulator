@@ -5,6 +5,7 @@ from player import Player
 from strategies.strategy import StrategyTable
 from round import BlackjackRound
 from collections import defaultdict
+from counter import Counter
 
 BLACKJACKTHREETOTWOPAYOUT = 1.5
 BLACKJACKSIXTOFIVEPAYOUT = 1.2
@@ -14,13 +15,14 @@ class Game:
         self.shoe = BlackjackShoe(num_decks)
         self.num_decks = num_decks  # Number of decks in the shoe
         self.num_players = num_players
-        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()]) for i in range(num_players)]
+        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations) for i in range(num_players)]
         self.dealer = Dealer(hit_on_soft_17=hit_on_soft_17, hand=Hand())
         self.resplit_till = resplit_till
         self.blackjack_payout = blackjack_payout
         self.min_bet = min_bet
         self.denominations = denominations
         self.house_bankroll = 0
+        self.counter = Counter()
         # [TODO] implement total number of splits
 
     def play(self, games=10, print_round_results=False, print_cards=False):
@@ -29,16 +31,17 @@ class Game:
         # bust = defaultdict(int) # dictionary to keep track of number of times a dealer busts
         # total = defaultdict(int) # dictionary to keep track of number of times a dealer showed a suit
         # blackjacks = 0  # Counter for number of blackjacks in the game
-        for i in range(games):
+        for _ in range(games):
             for player in self.players:
                 player.new_hand()
                 player.put_bet_on_initial_hand(self.min_bet)
             self.dealer.new_hand()
-            round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till)
+            round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till, counter=self.counter)
             results = round.play_round()
             self.house_bankroll += round.dealer_profit
             data_collector.append(round.dealer_profit)
             if self.shoe.reshuffle_needed:
+                self.counter.reset()
                 self.shoe = BlackjackShoe(self.num_decks) 
             if print_round_results:
                 print("=== Blackjack Round Results ===")
@@ -56,6 +59,7 @@ class Game:
             print(f"{player.name}: ${player.bankroll}")
         print(f"House Bankroll: ${self.house_bankroll}")
         print(f"Cards Left: {self.shoe.cut_index - self.shoe.deal_index}")
+        print(f"Decks Left: {self.shoe.decks_left()}")
         # print(f"Player Blackjacks: {blackjacks / games}")
         # print(f"bust percentage for each rank")
         # for rank in sorted(total.keys()):
