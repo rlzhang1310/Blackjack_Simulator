@@ -59,7 +59,7 @@ class BlackjackRound:
             print(dealer_upcard)
         results = []
         # offer insurance if the dealer has potential for blackjack
-        if dealer_upcard.rank in ["A", "10", "J", "Q", "K"]:
+        if dealer_upcard.rank == "A":
             true_count = self.get_estimated_true_count()
             for player in self.players:
                 player.insurance_bet(true_count)
@@ -75,8 +75,8 @@ class BlackjackRound:
                         players_hand.push()
                         # self.blackjack_counter += 1
                         results.append(f"{player.name} pushes with blackjack")
-                res = self._evaluate_round()
-                results.extend(res)
+                # results.extend(self._evaluate_insurance())
+                results.extend(self._evaluate_round())
                 return results
         for player in self.players:
             self._player_turn(player, dealer_upcard)
@@ -84,7 +84,7 @@ class BlackjackRound:
         # Dealer takes turn
         self.counter.update_count(self.dealer.hand.cards[0])
         self.dealer.dealer_turn(self.shoe, self.counter)
-        results.extend(self._evaluate_insurance())
+        # results.extend(self._evaluate_insurance())
         results.extend(self._evaluate_round())
 
         ########################################################################
@@ -182,8 +182,18 @@ class BlackjackRound:
         # Iterate through each player
         dealer_earnings = 0
         for player in self.players:
-            # Each player could have multiple hands (due to splits, etc.)
             player_earnings = 0
+            if player.hands[0].insurance_bet > 0:
+                if self.dealer.hand.is_blackjack():
+                    player_earnings += player.hands[0].insurance_bet * 2
+                    dealer_earnings -= player.hands[0].insurance_bet * 2
+                    outcomes.append(f"{player.name} wins insurance bet")
+                else:
+                    player_earnings -= player.hands[0].insurance_bet
+                    dealer_earnings += player.hands[0].insurance_bet
+                    outcomes.append(f"{player.name} loses insurance bet")
+
+            # Each player could have multiple hands (due to splits, etc.)            
             for j, hand in enumerate(player.hands, start=1):
                 player_total = hand.evaluate()
                 if hand.hand_status == "LOST":
@@ -229,6 +239,7 @@ class BlackjackRound:
                 elif hand.hand_status == "PUSH":
                     outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
                 else:
+                    ## DEBUGGING
                     print(f"Unexpected hand status: {hand.hand_status}")
                     i = 1 / 0
                     return i
@@ -238,19 +249,6 @@ class BlackjackRound:
         self.dealer_profit += dealer_earnings  # Update the dealer's profit after the round ends
         return outcomes
     
-    def _evaluate_insurance(self):
-        results = []
-        for player in self.players:
-            if player.hands[0].insurance_bet > 0:
-                if self.dealer.hand.is_blackjack():
-                    player.bankroll += player.hands[0].insurance_bet * 2
-                    self.dealer_profit -= player.hands[0].insurance_bet * 2
-                    results.append(f"{player.name} wins insurance bet")
-                else:
-                    player.bankroll -= player.hands[0].insurance_bet
-                    self.dealer_profit += player.hands[0].insurance_bet
-                    results.append(f"{player.name} loses insurance bet")
-        return results
     
     def track_high_low_count(self, card):
         """Implement high low count"""

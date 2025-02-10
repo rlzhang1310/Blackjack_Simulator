@@ -179,10 +179,8 @@ class Player:
         return "HIT"  # fallback
 
     def insurance_bet(self, true_count):
-        if true_count >= 3:
-            bet = self.hands[0].bet
-            # print("TOOK INSURANCE")
-            # print("------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------")
+        if true_count >= 3.2:
+            bet = self.hands[0].bet / 2
             self.hands[0].put_insurance_bet(bet)
         return
     
