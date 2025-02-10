@@ -1,11 +1,12 @@
 import unittest
-from deck import BlackjackShoe, Card
+from deck import BlackjackShoe, Card, create_single_deck, create_shoe, shuffle_shoe
 from dealer import Dealer
 from hand import Hand
 from player import Player
 from strategies.strategy import StrategyTable
 from round import BlackjackRound
 from game import Game
+from counter import Counter
 
 class TestBlackjackGame(unittest.TestCase):
 
@@ -26,7 +27,7 @@ class TestBlackjackGame(unittest.TestCase):
         self.player = Player(name="Test Player", strategy=self.strategy, bankroll=1000, hands=[Hand()])
 
         # Initialize round instance
-        self.round = BlackjackRound(shoe=self.shoe, players=[self.player], dealer=self.dealer, blackjack_payout=1.5, print_cards=True)
+        self.round = BlackjackRound(shoe=self.shoe, players=[self.player], dealer=self.dealer, blackjack_payout=1.5, print_cards=True, counter=Counter(), resplit_till=4)
 
     def test_split(self):
         """
@@ -59,7 +60,7 @@ class TestBlackjackGame(unittest.TestCase):
         self.dealer.hand.evaluate() 
 
         # Simulate the dealer's turn
-        self.dealer.dealer_turn(self.shoe)
+        self.dealer.dealer_turn(self.shoe, self.round.counter)
 
         # Assert the dealer hits until they have 17 or more
         self.assertGreaterEqual(self.dealer.hand.value, 17)
@@ -136,8 +137,8 @@ class TestBlackjackGame(unittest.TestCase):
             Card("2", "Hearts"), Card("3", "Hearts")
         ]
         self.shoe.deal_index = 0
-        for card in self.shoe.shoe:
-            print(card)
+        # for card in self.shoe.shoe:
+        #     print(card)
 
 
         # Set dealer's upcard to 6 (to encourage splitting)
@@ -160,6 +161,15 @@ class TestBlackjackGame(unittest.TestCase):
         # Verify each hand has exactly 2 cards
         for hand in self.player.hands:
             self.assertEqual(len(hand.cards), 2, "Each split hand should have 2 cards")
+
+    def test_count(self):
+        counter = Counter()
+        shoe = create_shoe()
+        shuffle_shoe(shoe)
+        for card in shoe:
+            counter.update_count(card)
+
+        self.assertEqual(counter.get_high_low_count(), 0)
 
 if __name__ == "__main__":
     unittest.main()

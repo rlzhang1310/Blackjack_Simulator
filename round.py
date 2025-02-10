@@ -65,7 +65,7 @@ class BlackjackRound:
                 player.insurance_bet(true_count)
             self.dealer.hand.evaluate()
             if self.dealer.hand.is_blackjack():
-                self.counter.update_count(self.dealer.hand.cards[1])
+                self.counter.update_count(self.dealer.hand.cards[0])
                 for player in self.players:
                     players_hand = player.hands[0]
                     if not player.hands[0].is_blackjack():
@@ -82,6 +82,7 @@ class BlackjackRound:
             self._player_turn(player, dealer_upcard)
 
         # Dealer takes turn
+        self.counter.update_count(self.dealer.hand.cards[0])
         self.dealer.dealer_turn(self.shoe, self.counter)
         results.extend(self._evaluate_insurance())
         results.extend(self._evaluate_round())
@@ -261,6 +262,17 @@ class BlackjackRound:
     def get_estimated_true_count(self):
         """Implement high low count"""
         decks_left = self.shoe.decks_left()
+        true_count = self.counter.get_high_low_count() / decks_left
+        # if true_count > 3:
+        #     print("\n")
+        #     print(f"Estimated total count: {self.counter.get_high_low_count()}")
+        #     print(f"Decks left: {decks_left}")
+        #     print(f"Estimated true count: {true_count}")
+        #     print(f"Shoe count: {self.shoe.counter.get_high_low_count()}")
+        #     cur_counter = Counter()
+        #     for card in self.shoe.cards[self.shoe.deal_index:]:
+        #         cur_counter.update_count(card)
+        #     print(f"count left in deck: {cur_counter.get_high_low_count()}")
         return self.counter.get_high_low_count() / decks_left
     
     def print_cards(self):

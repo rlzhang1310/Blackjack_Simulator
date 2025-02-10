@@ -1,4 +1,5 @@
 import random
+from counter import Counter
 
 suits = ["Clubs", "Diamonds", "Hearts", "Spades"]
 ranks = ["A", "2", "3", "4", "5", "6", "7", "8", 
@@ -49,7 +50,7 @@ def shuffle_shoe(shoe):
 
 
 class BlackjackShoe:
-    def __init__(self, num_decks=8, cut_index=None):
+    def __init__(self, num_decks=8, cut_index=None, counter=Counter()):
         self.num_decks = num_decks
         if cut_index is None:
             leftover_decks = random.uniform(1.2, 2)
@@ -62,14 +63,16 @@ class BlackjackShoe:
         # self.cards = shuffle_shoe(self.cards)
         # Place the cut card
         self.deal_index = 0  # How many cards we've dealt so far
+        self.counter = counter
 
     def decks_left(self):
         """
         Return the number of decks left in the shoe.
         """
-        remaining_decks = (self.num_decks * 52 - self.deal_index) // 52
-        rounded_decks = round(remaining_decks * 2) / 2
-        return rounded_decks
+        remaining_decks = self.num_decks - ((self.deal_index + 1) / 52)
+        # rounded_decks = round(remaining_decks * 2) / 2
+        # return rounded_decks
+        return remaining_decks
     
     def deal_card(self):
         """
@@ -81,5 +84,5 @@ class BlackjackShoe:
 
         card = self.cards[self.deal_index]
         self.deal_index += 1
-
+        self.counter.update_count(card)
         return card

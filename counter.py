@@ -13,6 +13,7 @@ class Counter:
             self.five_aces_count += 1
         elif card.rank == "A":
             self.five_aces_count -= 1
+        return
 
     def get_high_low_count(self):
         return self.high_low_count
@@ -23,4 +24,4 @@ class Counter:
     def reset(self):
         self.high_low_count = 0
         self.five_aces_count = 0
-        return
+        return self
