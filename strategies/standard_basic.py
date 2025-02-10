@@ -41,7 +41,7 @@ HARD_ACTIONS = {
     8:  { 'ALL': 'H' },
     9:  { 3: 'D', 4: 'D', 5: 'D', 6: 'D', 'DEFAULT': 'H' },
     10: { 2: 'D', 3: 'D', 4: 'D', 5: 'D', 6: 'D', 7: 'D', 8: 'D', 9: 'D', 'DEFAULT': 'H' },
-    11: { 'ALL': 'D' },  # usually double 11 vs any dealer card (though vs Ace can vary)
+    11: { 11: 'H', 'DEFAULT': 'D' },
     12: { 4: 'S', 5: 'S', 6: 'S', 'DEFAULT': 'H' },
     13: { 2: 'S', 3: 'S', 4: 'S', 5: 'S', 6: 'S', 'DEFAULT': 'H' },
     14: { 2: 'S', 3: 'S', 4: 'S', 5: 'S', 6: 'S', 'DEFAULT': 'H' },

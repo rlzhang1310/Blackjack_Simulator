@@ -117,7 +117,7 @@ class BlackjackRound:
             while True:
 
                 # Ask the player's strategy for an action
-                action = player.get_action(hand, dealer_upcard, self.resplit_till)
+                action = player.get_action(hand, dealer_upcard, self.resplit_till, self.get_estimated_true_count())
                 if self._print_cards:
                     print(action)
                 if action == "BUST":

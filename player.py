@@ -4,7 +4,7 @@ class Player:
     """
     A Blackjack Player with a specific strategy.
     """
-    def __init__(self, name, strategy, bankroll, hands, min_bet=10, denominations=10):
+    def __init__(self, name, strategy, bankroll, hands, min_bet=10, denominations=10, high_low_counting=False, ace_five_counting=False):
         """
         :param name: A string to identify this player
         :param strategy: An object implementing .get_action(hand, dealer_card)
@@ -14,11 +14,13 @@ class Player:
         self.pair_strategy = strategy["PAIR"]
         self.soft_strategy = strategy["SOFT"]
         self.hard_strategy = strategy["HARD"]
+        self.high_low_counting = high_low_counting
+        self.ace_five_counting = ace_five_counting
         self.bankroll = bankroll
         self.min_bet = min_bet
         self.denominations = denominations
 
-    def get_action(self, hand, dealer_card, resplit_till):
+    def get_action(self, hand, dealer_card, resplit_till, true_count):
         """
         Determine whether to HIT, STAND, DOUBLE, or SPLIT using the strategy tables.
         :param hand: Hand object (with hand.value, hand.soft, hand.cards).
@@ -35,6 +37,10 @@ class Player:
         # Dealer upcard as integer (2..11)
         up_val = dealer_upcard_value(dealer_card)
 
+        if self.high_low_counting:
+            action = self._deviations(hand, up_val, resplit_till, true_count)
+            if action:
+                return action
         # If 2 cards and pair
         if len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till:
             action = self._pair_action(hand, up_val)
@@ -178,6 +184,73 @@ class Player:
             return "SPLIT"
         return "HIT"  # fallback
 
+    def _deviations(self, hand, dealer_up_val, resplit_till, true_count):
+        if len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till and hand.value == 20:
+            if true_count >= 4 and dealer_up_val == 6:
+                return "SPLIT"
+            if true_count >= 5 and dealer_up_val == 5:
+                return "SPLIT"
+            if true_count >= 6 and dealer_up_val == 4:
+                return "SPLIT"
+        elif len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till and hand.value == 18:
+            if true_count >= 3 and dealer_up_val == 7:
+                return "SPLIT"
+        elif hand.value == 16:
+            if true_count > 0 and dealer_up_val == 10:
+                return "STAND"
+            if true_count >= 4 and dealer_up_val == 9:
+                return "STAND"
+            if true_count >= 3 and dealer_up_val == 11:
+                return "STAND"
+        elif hand.value == 15:
+            if true_count >= 4 and dealer_up_val == 10:
+                return "STAND"
+        elif hand.value == 13:
+            if true_count <= -1 and dealer_up_val == 2:
+                return "HIT"
+            if true_count <= -2 and dealer_up_val == 3:
+                return "HIT"
+        elif hand.value == 12:
+            if true_count >= 3 and dealer_up_val == 2:
+                return "STAND"
+            if true_count >= 2 and dealer_up_val == 3:
+                return "STAND"
+            if true_count < 0 and dealer_up_val == 4:
+                return "HIT"
+        elif hand.value == 11:
+            if true_count > 0 and dealer_up_val == 11:
+                return "DOUBLE"
+        elif hand.value == 10:
+            if true_count >= 4 and dealer_up_val == 10:
+                return "DOUBLE"
+            if true_count >= 3 and dealer_up_val == 11:
+                return "DOUBLE"
+        elif hand.soft and hand.value == 20:
+            if true_count >= 4 and dealer_up_val == 6:
+                return "DOUBLE"
+            if true_count >= 5 and dealer_up_val == 5:
+                return "DOUBLE"
+            if true_count >= 6 and dealer_up_val == 4:
+                return "DOUBLE"
+        elif hand.soft and hand.value == 19:
+            if true_count >= 0 and dealer_up_val == 6:
+                return "DOUBLE"
+            if true_count >= 1 and dealer_up_val == 5:
+                return "DOUBLE"
+            if true_count >= 3 and dealer_up_val == 4:
+                return "DOUBLE"
+            if true_count >= 5 and dealer_up_val == 3:
+                return "DOUBLE"
+        elif hand.soft and hand.value == 17:
+            if true_count >= 1 and dealer_up_val == 2:
+                return "DOUBLE"
+        elif hand.soft and hand.value == 15:
+            if true_count < 0 and dealer_up_val == 4:
+                return "HIT"
+        else:
+            return None
+
+ 
     def insurance_bet(self, true_count):
         if true_count >= 3.2:
             bet = self.hands[0].bet / 2

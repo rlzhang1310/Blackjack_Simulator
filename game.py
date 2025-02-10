@@ -16,7 +16,7 @@ class Game:
         self.shoe = BlackjackShoe(num_decks)
         self.num_decks = num_decks  # Number of decks in the shoe
         self.num_players = num_players
-        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations) for i in range(num_players)]
+        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations, high_low_counting=True) for i in range(num_players)]
         self.dealer = Dealer(hit_on_soft_17=hit_on_soft_17, hand=Hand())
         self.resplit_till = resplit_till
         self.blackjack_payout = blackjack_payout
