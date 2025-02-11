@@ -257,9 +257,18 @@ class Player:
             self.hands[0].put_insurance_bet(bet)
         return
     
-    def put_bet_on_initial_hand(self, bet):
-        # [TODO]: Implement card counting
+    def put_bet_on_initial_hand(self, true_count):
+        bet = self.min_bet * 2
+        if true_count <= -1:
+            bet -= self.denominations
+        elif true_count >= 2:
+            bet += 2 * self.denominations
+        elif true_count >= 3:
+            bet += 4 * self.denominations
+        elif true_count >= 4:
+            bet += 6 * self.denominations
         self.hands[0].put_initial_bet(bet)
+        return bet
 
     def new_hand(self):
         self.hands = [Hand()]

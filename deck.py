@@ -70,9 +70,9 @@ class BlackjackShoe:
         Return the number of decks left in the shoe.
         """
         remaining_decks = self.num_decks - ((self.deal_index + 1) / 52)
-        # rounded_decks = round(remaining_decks * 2) / 2
-        # return rounded_decks
-        return remaining_decks
+        rounded_decks = round(remaining_decks * 2) / 2
+        return rounded_decks
+        # return remaining_decks
     
     def deal_card(self):
         """

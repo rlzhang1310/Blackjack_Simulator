@@ -261,17 +261,7 @@ class BlackjackRound:
         """Implement high low count"""
         decks_left = self.shoe.decks_left()
         true_count = self.counter.get_high_low_count() / decks_left
-        # if true_count > 3:
-        #     print("\n")
-        #     print(f"Estimated total count: {self.counter.get_high_low_count()}")
-        #     print(f"Decks left: {decks_left}")
-        #     print(f"Estimated true count: {true_count}")
-        #     print(f"Shoe count: {self.shoe.counter.get_high_low_count()}")
-        #     cur_counter = Counter()
-        #     for card in self.shoe.cards[self.shoe.deal_index:]:
-        #         cur_counter.update_count(card)
-        #     print(f"count left in deck: {cur_counter.get_high_low_count()}")
-        return self.counter.get_high_low_count() / decks_left
+        return true_count
     
     def print_cards(self):
         for player in self.players:

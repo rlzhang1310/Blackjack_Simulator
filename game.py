@@ -16,7 +16,7 @@ class Game:
         self.shoe = BlackjackShoe(num_decks)
         self.num_decks = num_decks  # Number of decks in the shoe
         self.num_players = num_players
-        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations, high_low_counting=True) for i in range(num_players)]
+        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations) for i in range(num_players)]
         self.dealer = Dealer(hit_on_soft_17=hit_on_soft_17, hand=Hand())
         self.resplit_till = resplit_till
         self.blackjack_payout = blackjack_payout
@@ -33,9 +33,10 @@ class Game:
         # total = defaultdict(int) # dictionary to keep track of number of times a dealer showed a suit
         # blackjacks = 0  # Counter for number of blackjacks in the game
         for _ in range(games):
+            true_count = self.get_estimated_true_count()
             for player in self.players:
                 player.new_hand()
-                player.put_bet_on_initial_hand(self.min_bet)
+                player.put_bet_on_initial_hand(true_count)
             self.dealer.new_hand()
             round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till, counter=self.counter)
             results = round.play_round()
@@ -68,3 +69,10 @@ class Game:
         # for rank in sorted(total.keys()):
         #     print(f"{rank}: {bust[rank] / total[rank]}")
         return data_collector
+    
+
+    def get_estimated_true_count(self):
+        """Implement high low count"""
+        decks_left = self.shoe.decks_left()
+        true_count = self.counter.get_high_low_count() / decks_left
+        return true_count
