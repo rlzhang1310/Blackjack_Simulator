@@ -18,12 +18,13 @@ if __name__ == "__main__":
     num_players = 1
     num_games = 1
     bet_size = 10
-    num_rounds = 10000000
+    num_rounds = 5000000
     for _ in range(num_games):
-        game = Game(num_decks=8, num_players=num_players, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=bet_size, denominations=10, player_bankroll=0, resplit_till=4)
+        game = Game(num_decks=8, num_players=num_players, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=bet_size, denominations=100, player_bankroll=0, resplit_till=4)
         for player in game.players:
-            player.high_low_counting = True
-        round_data = game.play(num_rounds, print_cards=False)
+            player.ace_five_counting = True
+            player.high_low_counting = False
+        round_data = game.play(num_rounds, print_cards=False, print_round_results=False)
         rounds.extend(round_data)
         games.append(game.house_bankroll)
 

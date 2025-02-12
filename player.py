@@ -257,17 +257,31 @@ class Player:
             self.hands[0].put_insurance_bet(bet)
         return
     
-    def put_bet_on_initial_hand(self, true_count):
-        bet = self.min_bet * 2
-        if true_count <= -1:
-            bet -= self.denominations
-        elif true_count >= 2:
-            bet += 2 * self.denominations
-        elif true_count >= 3:
-            bet += 4 * self.denominations
-        elif true_count >= 4:
-            bet += 6 * self.denominations
-        self.hands[0].put_initial_bet(bet)
+    def put_bet_on_initial_hand(self, high_low_true_count, five_aces_true_count):
+        if self.high_low_counting:
+            bet = self.min_bet * 2
+            if high_low_true_count <= -1:
+                bet -= self.denominations
+            elif high_low_true_count >= 2:
+                bet += 2 * self.denominations
+            elif high_low_true_count >= 3:
+                bet += 4 * self.denominations
+            elif high_low_true_count >= 4:
+                bet += 6 * self.denominations
+            self.hands[0].put_initial_bet(bet)
+        elif self.ace_five_counting:
+            bet = self.min_bet
+            if five_aces_true_count >= 2:
+                bet *= 2
+            elif five_aces_true_count >= 3:
+                bet *= 4
+            elif five_aces_true_count >= 4:
+                bet *= 8
+            elif five_aces_true_count >= 5:
+                bet *= 16
+            elif five_aces_true_count >= 6:
+                bet *= 32
+            self.hands[0].put_initial_bet(bet)
         return bet
 
     def new_hand(self):

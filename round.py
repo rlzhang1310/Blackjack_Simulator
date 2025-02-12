@@ -60,9 +60,10 @@ class BlackjackRound:
         results = []
         # offer insurance if the dealer has potential for blackjack
         if dealer_upcard.rank == "A":
-            true_count = self.get_estimated_true_count()
+            high_low_true_count = self.get_estimated_high_low_true_count()
+            # five_ace_true_count = self.get_estimated_five_aces_true_count()
             for player in self.players:
-                player.insurance_bet(true_count)
+                player.insurance_bet(high_low_true_count)
             self.dealer.hand.evaluate()
             if self.dealer.hand.is_blackjack():
                 self.counter.update_count(self.dealer.hand.cards[0])
@@ -117,7 +118,7 @@ class BlackjackRound:
             while True:
 
                 # Ask the player's strategy for an action
-                action = player.get_action(hand, dealer_upcard, self.resplit_till, self.get_estimated_true_count())
+                action = player.get_action(hand, dealer_upcard, self.resplit_till, self.get_estimated_high_low_true_count())
                 if self._print_cards:
                     print(action)
                 if action == "BUST":
@@ -257,10 +258,16 @@ class BlackjackRound:
         elif card.rank in ["10", "J", "Q", "K", "A"]:
             self.high_low_count -= 1
 
-    def get_estimated_true_count(self):
+    def get_estimated_high_low_true_count(self):
         """Implement high low count"""
         decks_left = self.shoe.decks_left()
         true_count = self.counter.get_high_low_count() / decks_left
+        return true_count
+    
+    def get_estimated_five_aces_true_count(self):
+        """Implement high low count"""
+        decks_left = self.shoe.decks_left()
+        true_count = self.counter.get_five_aces_count() / decks_left
         return true_count
     
     def print_cards(self):

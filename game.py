@@ -33,10 +33,11 @@ class Game:
         # total = defaultdict(int) # dictionary to keep track of number of times a dealer showed a suit
         # blackjacks = 0  # Counter for number of blackjacks in the game
         for _ in range(games):
-            true_count = self.get_estimated_true_count()
+            high_low_true_count = self.get_estimated_high_low_true_count()
+            five_aces_true_count = self.get_estimated_five_aces_true_count()
             for player in self.players:
                 player.new_hand()
-                player.put_bet_on_initial_hand(true_count)
+                player.put_bet_on_initial_hand(high_low_true_count, five_aces_true_count)
             self.dealer.new_hand()
             round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till, counter=self.counter)
             results = round.play_round()
@@ -71,8 +72,14 @@ class Game:
         return data_collector
     
 
-    def get_estimated_true_count(self):
+    def get_estimated_high_low_true_count(self):
         """Implement high low count"""
         decks_left = self.shoe.decks_left()
         true_count = self.counter.get_high_low_count() / decks_left
+        return true_count
+    
+    def get_estimated_five_aces_true_count(self):
+        """Implement high low count"""
+        decks_left = self.shoe.decks_left()
+        true_count = self.counter.get_five_aces_count() / decks_left
         return true_count
