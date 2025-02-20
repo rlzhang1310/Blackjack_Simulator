@@ -35,6 +35,13 @@ class Game:
         for _ in range(games):
             high_low_true_count = self.get_estimated_high_low_true_count()
             five_aces_true_count = self.get_estimated_five_aces_true_count()
+            if high_low_true_count > 1:
+                # for _ in range(int(high_low_true_count)):
+                # if len(self.players) != self.num_players:
+                #     print(len(self.players))
+                self.players.append(self.players[-1].play_another_hand()) ## play an extra hand if true count is good
+            else:
+                self.players = self.players[:self.num_players]
             for player in self.players:
                 player.new_hand()
                 player.put_bet_on_initial_hand(high_low_true_count, five_aces_true_count)

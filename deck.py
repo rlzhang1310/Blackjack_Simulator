@@ -53,6 +53,7 @@ class BlackjackShoe:
     def __init__(self, num_decks=8, cut_index=None, counter=Counter()):
         self.num_decks = num_decks
         if cut_index is None:
+            # leftover_decks = 4
             leftover_decks = random.uniform(1.2, 2)
             self.cut_index = num_decks * 52 - round(52 * leftover_decks)
         else:

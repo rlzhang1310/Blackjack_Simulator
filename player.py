@@ -1,4 +1,5 @@
 from hand import Hand
+import copy
 
 class Player:
     """
@@ -19,6 +20,12 @@ class Player:
         self.bankroll = bankroll
         self.min_bet = min_bet
         self.denominations = denominations
+
+    def play_another_hand(self):
+        name = self.name + "_" + "+TC"
+        second_hand_player = copy.deepcopy(self)
+        second_hand_player.name = name
+        return second_hand_player
 
     def get_action(self, hand, dealer_card, resplit_till, true_count):
         """
