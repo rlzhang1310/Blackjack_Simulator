@@ -72,6 +72,8 @@ class BlackjackShoe:
         """
         remaining_decks = self.num_decks - ((self.deal_index + 1) / 52)
         rounded_decks = round(remaining_decks * 2) / 2
+        if rounded_decks < 0.5:
+            return 0.5
         return rounded_decks
         # return remaining_decks
     

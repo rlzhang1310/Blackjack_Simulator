@@ -18,7 +18,10 @@ if __name__ == "__main__":
     num_players = 1
     num_games = 1
     bet_size = 10
-    num_rounds = 10000000
+    num_rounds = 1000
+    # win_count_matrix = np.zeros((10, 35))
+    # profit_count_matrix = np.zeros((10, 35))
+    # total_count_matrix = np.zeros((10, 35))
     for _ in range(num_games):
         game = Game(num_decks=8, num_players=num_players, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=bet_size, denominations=100, player_bankroll=0, resplit_till=4)
         for player in game.players:
@@ -27,7 +30,13 @@ if __name__ == "__main__":
         round_data = game.play(num_rounds, print_cards=False, print_round_results=False)
         rounds.extend(round_data)
         games.append(game.house_bankroll)
+        # win_count_matrix += game.win_count_matrix
+        # profit_count_matrix += game.profit_count_matrix
+        # total_count_matrix += game.total_count_matrix
 
+
+    # win_percentage_matrix = np.divide(win_count_matrix, total_count_matrix, out=np.zeros_like(win_count_matrix), where=total_count_matrix != 0)
+    # print(win_percentage_matrix)
     sum = 0
     wins = 0
     losses = 0

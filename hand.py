@@ -18,6 +18,8 @@ class Hand:
         self.insurance_bet = 0
         self.bet = bet
         self.hand_status = "ACTIVE"
+        self.matrix_index = []
+        self.double = False
     def evaluate(self):
         """
         Calculates and updates:
@@ -112,6 +114,7 @@ class Hand:
 
     def double_down(self):
         self.bet *= 2
+        self.double = True
 
     def split(self):
         second_card = self.cards.pop()  # Now 'hand' has just 1 card
@@ -119,8 +122,25 @@ class Hand:
         new_hand = Hand([second_card])
         new_hand.bet = self.bet
         new_hand.hand_status = "ACTIVE"
+        new_hand.matrix_index = self.matrix_index.copy()
         return new_hand
     
+    def is_pair(self):
+        if len(self.cards) == 2 and self.cards[0].rank == self.cards[1].rank:
+            return True
+        return False
+    
+    def get_player_matrix_index(self):
+        self.evaluate()
+        if self.is_pair():
+            return int(24 + (self.value / 2))
+        elif self.soft:
+            return int(15 + (self.value - 12))
+        else:
+            return self.value - 5
+        
+    def record_index(self):
+        self.matrix_index.append(self.get_player_matrix_index())
     def print_hand(self):
         """
         Prints the hand in a human-readable format, showing:

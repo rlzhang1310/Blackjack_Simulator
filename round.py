@@ -5,6 +5,7 @@ from player import Player
 from strategies.strategy import StrategyTable
 from collections import defaultdict
 from counter import Counter
+import numpy as np
 
 class BlackjackRound:
     def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False, resplit_till=4, counter: Counter=None):
@@ -22,6 +23,9 @@ class BlackjackRound:
         self.dealer_profit = 0
         self._print_cards = print_cards
         self.counter = counter
+        self.win_count_matrix = np.zeros((10, 35))
+        self.profit_count_matrix = np.zeros((10, 35))
+        self.total_count_matrix = np.zeros((10, 35))
         ########################################################################
         # BUSTING DEBUGGING VARIABLES
         # self.blackjack_counter = 0
@@ -69,6 +73,7 @@ class BlackjackRound:
                 self.counter.update_count(self.dealer.hand.cards[0])
                 for player in self.players:
                     players_hand = player.hands[0]
+                    players_hand.record_index()
                     if not player.hands[0].is_blackjack():
                         players_hand.lost()
                         results.append(f"{player.name} loses, dealer has blackjack")
@@ -114,6 +119,7 @@ class BlackjackRound:
             hand = player.hands[hand_index]
             if self._print_cards:
                 print(f"\n{player.name}'s actions for hand {hand_index+1}:")
+            hand.record_index()
             # Continue acting on this hand until the player stands, busts, or doubles
             while True:
 
@@ -134,6 +140,7 @@ class BlackjackRound:
                     # Deal one card to the current hand
                     card = self.shoe.deal_card()
                     hand.add_card(card)
+                    # hand.record_index()
                     self.counter.update_count(card)
 
                 elif action == "STAND":
@@ -157,6 +164,7 @@ class BlackjackRound:
                     card_2 = self.shoe.deal_card()
                     hand.add_card(card_1)
                     new_hand.add_card(card_2)
+                    new_hand.record_index()
                     self.counter.update_count(card_1)
                     self.counter.update_count(card_2)
 
@@ -179,6 +187,13 @@ class BlackjackRound:
         dealer_total = self.dealer.hand.evaluate()
         dealer_bust = dealer_total > 21
 
+        dealer_upcard_rank = self.dealer.hand.cards[1].rank
+        if dealer_upcard_rank == 'A':
+            dealer_matrix_index = 9
+        elif dealer_upcard_rank in ['J', 'Q', 'K']:
+            dealer_matrix_index = 8
+        else:
+            dealer_matrix_index = int(dealer_upcard_rank) - 2
         outcomes = []
         # Iterate through each player
         dealer_earnings = 0
@@ -196,6 +211,10 @@ class BlackjackRound:
 
             # Each player could have multiple hands (due to splits, etc.)            
             for j, hand in enumerate(player.hands, start=1):
+                for matrix_idx in hand.matrix_index:
+                    # hand.print_hand()
+                    # print(matrix_idx)
+                    self.total_count_matrix[dealer_matrix_index, matrix_idx] += 1
                 player_total = hand.evaluate()
                 if hand.hand_status == "LOST":
                     outcomes.append(f"{player.name} Hand {j} lost with {player_total}. Dealer wins.")
@@ -207,11 +226,19 @@ class BlackjackRound:
                         outcomes.append(f"{player.name} Hand {j} has BLACKJACK with split hands")
                         player_earnings += hand.bet  
                         dealer_earnings -= hand.bet
+                        for matrix_idx in hand.matrix_index:
+                            # if matrix_idx == 24:
+                            #     continue
+                            self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
+                            # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += 1
                     else:
                         outcomes.append(f"{player.name} Hand {j} has BLACKJACK")
                         payout = round(hand.bet * self.blackjack_payout) # should always be an int
                         player_earnings += payout  
                         dealer_earnings -= payout
+                        for matrix_idx in hand.matrix_index:
+                            self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
+                            # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += self.blackjack_payout
                 elif hand.hand_status == "ACTIVE":
                     if player_total > 21:
                         hand.lost()
@@ -223,12 +250,20 @@ class BlackjackRound:
                         outcomes.append(f"{player.name} Hand {j} wins with {player_total}. Dealer busts with {dealer_total}.")
                         player_earnings += hand.bet
                         dealer_earnings -= hand.bet
+                        for matrix_idx in hand.matrix_index:
+                            self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
+                            # profit = 2 if hand.double else 1
+                            # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += profit
                     else:
                         if player_total > dealer_total:
                             hand.won()
                             outcomes.append(f"{player.name} Hand {j} wins with {player_total} > {dealer_total}.")
                             player_earnings += hand.bet
                             dealer_earnings -= hand.bet
+                            for matrix_idx in hand.matrix_index:
+                                self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
+                                # profit = 2 if hand.double else 1
+                                # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += profit
                         elif player_total < dealer_total:
                             hand.lost()
                             outcomes.append(f"Dealer wins with {dealer_total} > {player_total}.")
@@ -237,8 +272,14 @@ class BlackjackRound:
                         else:
                             hand.push()
                             outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
+                            for matrix_idx in hand.matrix_index:
+                                self.win_count_matrix[dealer_matrix_index, matrix_idx] += 0.5
+                                # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += 0.5
                 elif hand.hand_status == "PUSH":
                     outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
+                    for matrix_idx in hand.matrix_index:
+                        self.win_count_matrix[dealer_matrix_index, matrix_idx] += 0.5
+                        # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += 0.5
                 else:
                     ## DEBUGGING
                     print(f"Unexpected hand status: {hand.hand_status}")
@@ -249,14 +290,6 @@ class BlackjackRound:
         outcomes.append(f"Dealer earned ${dealer_earnings}.")
         self.dealer_profit += dealer_earnings  # Update the dealer's profit after the round ends
         return outcomes
-    
-    
-    def track_high_low_count(self, card):
-        """Implement high low count"""
-        if card.rank in ["2", "3", "4", "5", "6"]:
-            self.high_low_count += 1
-        elif card.rank in ["10", "J", "Q", "K", "A"]:
-            self.high_low_count -= 1
 
     def get_estimated_high_low_true_count(self):
         """Implement high low count"""

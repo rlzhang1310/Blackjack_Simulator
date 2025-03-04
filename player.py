@@ -289,6 +289,9 @@ class Player:
             elif five_aces_true_count >= 6:
                 bet *= 32
             self.hands[0].put_initial_bet(bet)
+        else:
+            bet = self.min_bet
+            self.hands[0].put_initial_bet(bet)
         return bet
 
     def new_hand(self):

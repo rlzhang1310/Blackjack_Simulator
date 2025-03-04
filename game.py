@@ -6,6 +6,7 @@ from strategies.strategy import StrategyTable
 from round import BlackjackRound
 from collections import defaultdict
 from counter import Counter
+import numpy as np
 
 BLACKJACKTHREETOTWOPAYOUT = 1.5
 BLACKJACKSIXTOFIVEPAYOUT = 1.2
@@ -24,6 +25,10 @@ class Game:
         self.denominations = denominations
         self.house_bankroll = 0
         self.counter = Counter()
+        self.win_count_matrix = np.zeros((10, 35))
+        self.profit_count_matrix = np.zeros((10, 35))
+        self.total_count_matrix = np.zeros((10, 35))
+
         # [TODO] implement total number of splits
 
     def play(self, games=10, print_round_results=False, print_cards=False):
@@ -35,7 +40,7 @@ class Game:
         for _ in range(games):
             high_low_true_count = self.get_estimated_high_low_true_count()
             five_aces_true_count = self.get_estimated_five_aces_true_count()
-            if high_low_true_count > 1:
+            if high_low_true_count > 1 and self.players[0].high_low_counting:
                 # for _ in range(int(high_low_true_count)):
                 # if len(self.players) != self.num_players:
                 #     print(len(self.players))
@@ -49,6 +54,10 @@ class Game:
             round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till, counter=self.counter)
             results = round.play_round()
             self.house_bankroll += round.dealer_profit
+            # updating matricies
+            self.win_count_matrix += round.win_count_matrix
+            self.profit_count_matrix += round.profit_count_matrix
+            self.total_count_matrix += round.total_count_matrix
             data_collector.append(round.dealer_profit)
             if self.shoe.reshuffle_needed:
                 # print(self.counter.get_high_low_count())
