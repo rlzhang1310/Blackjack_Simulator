@@ -68,9 +68,9 @@ class Player:
 
         ranks = [card.rank for card in hand.cards]
         # Check if both are 10/J/Q/K
-        # if (ranks[0] in ["10", "J", "Q", "K"] 
-        #         and ranks[1] in ["10", "J", "Q", "K"]):
-        #     return True
+        if (ranks[0] in ["10", "J", "Q", "K"] 
+                and ranks[1] in ["10", "J", "Q", "K"]):
+            return True
         return (ranks[0] == ranks[1])
 
     def _pair_action(self, hand, dealer_up_val):

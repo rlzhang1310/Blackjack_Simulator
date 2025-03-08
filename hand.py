@@ -18,7 +18,7 @@ class Hand:
         self.insurance_bet = 0
         self.bet = bet
         self.hand_status = "ACTIVE"
-        self.matrix_index = []
+        self.matrix_index = set()
         self.double = False
     def evaluate(self):
         """
@@ -126,21 +126,35 @@ class Hand:
         return new_hand
     
     def is_pair(self):
-        if len(self.cards) == 2 and self.cards[0].rank == self.cards[1].rank:
+        value_map = {
+            "A": 11, "K": 10, "Q": 10, "J": 10, "10": 10,
+            "9": 9,  "8": 8,  "7": 7,  "6": 6,
+            "5": 5,  "4": 4,  "3": 3,  "2": 2
+        }
+        if len(self.cards) == 2 and value_map[self.cards[0].rank] == value_map[self.cards[1].rank]:
             return True
         return False
     
     def get_player_matrix_index(self):
+        value_map = {
+            "A": 11, "K": 10, "Q": 10, "J": 10, "10": 10,
+            "9": 9,  "8": 8,  "7": 7,  "6": 6,
+            "5": 5,  "4": 4,  "3": 3,  "2": 2
+        }
+        list = []
         self.evaluate()
         if self.is_pair():
-            return int(24 + (self.value / 2))
+            list.append(int(23 + (value_map[self.cards[0].rank])))
+            if self.cards[0].rank not in ["2", "A"]:
+                list.append(self.value - 5)
         elif self.soft:
-            return int(15 + (self.value - 12))
+            list.append(int(15 + (self.value - 12)))
         else:
-            return self.value - 5
+            list.append(self.value - 5)
+        return list
         
     def record_index(self):
-        self.matrix_index.append(self.get_player_matrix_index())
+        self.matrix_index.update(self.get_player_matrix_index())
     def print_hand(self):
         """
         Prints the hand in a human-readable format, showing:

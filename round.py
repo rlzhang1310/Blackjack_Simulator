@@ -69,21 +69,24 @@ class BlackjackRound:
             for player in self.players:
                 player.insurance_bet(high_low_true_count)
             self.dealer.hand.evaluate()
-            if self.dealer.hand.is_blackjack():
-                self.counter.update_count(self.dealer.hand.cards[0])
-                for player in self.players:
-                    players_hand = player.hands[0]
-                    players_hand.record_index()
-                    if not player.hands[0].is_blackjack():
-                        players_hand.lost()
-                        results.append(f"{player.name} loses, dealer has blackjack")
-                    else:
-                        players_hand.push()
+
+
+        if self.dealer.hand.is_blackjack():
+            self.counter.update_count(self.dealer.hand.cards[0])
+            for player in self.players:
+                players_hand = player.hands[0]
+                players_hand.record_index()
+                if not player.hands[0].is_blackjack():
+                    players_hand.lost()
+                    results.append(f"{player.name} loses, dealer has blackjack")
+                else:
+                    players_hand.push()
                         # self.blackjack_counter += 1
-                        results.append(f"{player.name} pushes with blackjack")
-                # results.extend(self._evaluate_insurance())
-                results.extend(self._evaluate_round())
-                return results
+                    results.append(f"{player.name} pushes with blackjack")
+            # results.extend(self._evaluate_insurance())
+            results.extend(self._evaluate_round())
+            return results
+        
         for player in self.players:
             self._player_turn(player, dealer_upcard)
 
@@ -164,6 +167,7 @@ class BlackjackRound:
                     card_2 = self.shoe.deal_card()
                     hand.add_card(card_1)
                     new_hand.add_card(card_2)
+                    hand.record_index()
                     new_hand.record_index()
                     self.counter.update_count(card_1)
                     self.counter.update_count(card_2)
