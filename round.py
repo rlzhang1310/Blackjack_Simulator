@@ -10,8 +10,7 @@ import numpy as np
 class BlackjackRound:
     def __init__(self, shoe: BlackjackShoe, players, dealer, blackjack_payout, print_cards=False, resplit_till=4, counter: Counter=None):
         """
-        Simulates a single round of blackjack with `num_players` players,
-        using the provided `shoe` for card dealing.
+        Simulates a single round of blackjack
         """
         self.shoe = shoe
         # Store each player's hand as a list of (rank, suit)
@@ -26,6 +25,7 @@ class BlackjackRound:
         self.win_count_matrix = np.zeros((10, 35))
         self.profit_count_matrix = np.zeros((10, 35))
         self.total_count_matrix = np.zeros((10, 35))
+        self.total_profit_matrix = np.zeros((10, 35))
         ########################################################################
         # BUSTING DEBUGGING VARIABLES
         # self.blackjack_counter = 0
@@ -35,7 +35,10 @@ class BlackjackRound:
         self._deal_initial_cards()
 
     def _deal_initial_cards(self):
-        """Deal 2 cards to each player, then 2 cards to the dealer."""
+        """
+        Deal 2 cards to each player, then 2 cards to the dealer with the ordering of blackjack
+        One card to each player, then dealer, then second round of cards to players and then dealer
+        """        
         for i in range(2):
             for player in self.players:
                 card = self.shoe.deal_card()
@@ -53,7 +56,7 @@ class BlackjackRound:
         1) Each player acts with a simple strategy
         2) Dealer acts
         3) Determine results
-        Returns a list of outcome strings or any data structure you prefer.
+        Returns a list of outcome strings.
         """
         # Players take their turns
         dealer_upcard = self.dealer.hand.cards[1]
@@ -67,7 +70,7 @@ class BlackjackRound:
             high_low_true_count = self.get_estimated_high_low_true_count()
             # five_ace_true_count = self.get_estimated_five_aces_true_count()
             for player in self.players:
-                player.insurance_bet(high_low_true_count)
+                player.put_insurance_bet(high_low_true_count)
             self.dealer.hand.evaluate()
 
 
@@ -83,7 +86,6 @@ class BlackjackRound:
                     players_hand.push()
                         # self.blackjack_counter += 1
                     results.append(f"{player.name} pushes with blackjack")
-            # results.extend(self._evaluate_insurance())
             results.extend(self._evaluate_round())
             return results
         
@@ -93,7 +95,6 @@ class BlackjackRound:
         # Dealer takes turn
         self.counter.update_count(self.dealer.hand.cards[0])
         self.dealer.dealer_turn(self.shoe, self.counter)
-        # results.extend(self._evaluate_insurance())
         results.extend(self._evaluate_round())
 
         ########################################################################
@@ -172,7 +173,7 @@ class BlackjackRound:
                     self.counter.update_count(card_1)
                     self.counter.update_count(card_2)
 
-                    # Append the new hand to the player's list
+                    # Append the new hand to the player's hands
                     player.hands.append(new_hand)
                     continue
 
@@ -203,92 +204,73 @@ class BlackjackRound:
         dealer_earnings = 0
         for player in self.players:
             player_earnings = 0
-            if player.hands[0].insurance_bet > 0:
-                if self.dealer.hand.is_blackjack():
-                    player_earnings += player.hands[0].insurance_bet * 2
-                    dealer_earnings -= player.hands[0].insurance_bet * 2
-                    outcomes.append(f"{player.name} wins insurance bet")
-                else:
-                    player_earnings -= player.hands[0].insurance_bet
-                    dealer_earnings += player.hands[0].insurance_bet
-                    outcomes.append(f"{player.name} loses insurance bet")
 
             # Each player could have multiple hands (due to splits, etc.)            
             for j, hand in enumerate(player.hands, start=1):
                 for matrix_idx in hand.matrix_index:
-                    # hand.print_hand()
-                    # print(matrix_idx)
                     self.total_count_matrix[dealer_matrix_index, matrix_idx] += 1
+                    self.total_profit_matrix[dealer_matrix_index, matrix_idx] += hand.bet
                 player_total = hand.evaluate()
+                payout = 0
                 if hand.hand_status == "LOST":
                     outcomes.append(f"{player.name} Hand {j} lost with {player_total}. Dealer wins.")
-                    player_earnings -= hand.bet
-                    dealer_earnings += hand.bet
+                    payout -= hand.bet
                 elif hand.hand_status == "BLACKJACK WIN":
                     # Player does not win blackjack bonus for split hands
                     if len(player.hands) > 1:
                         outcomes.append(f"{player.name} Hand {j} has BLACKJACK with split hands")
-                        player_earnings += hand.bet  
-                        dealer_earnings -= hand.bet
-                        for matrix_idx in hand.matrix_index:
-                            # if matrix_idx == 24:
-                            #     continue
-                            self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
-                            # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += 1
+                        payout += hand.bet
                     else:
                         outcomes.append(f"{player.name} Hand {j} has BLACKJACK")
-                        payout = round(hand.bet * self.blackjack_payout) # should always be an int
-                        player_earnings += payout  
-                        dealer_earnings -= payout
-                        for matrix_idx in hand.matrix_index:
-                            self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
-                            # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += self.blackjack_payout
+                        payout += round(hand.bet * self.blackjack_payout) # should always be an int
                 elif hand.hand_status == "ACTIVE":
                     if player_total > 21:
                         hand.lost()
+                        payout -= hand.bet
                         outcomes.append(f"{player.name} Hand {j} busts with {player_total}. Dealer wins.")
-                        player_earnings -= hand.bet
-                        dealer_earnings += hand.bet
                     elif dealer_bust:
                         hand.won()
+                        payout += hand.bet
                         outcomes.append(f"{player.name} Hand {j} wins with {player_total}. Dealer busts with {dealer_total}.")
-                        player_earnings += hand.bet
-                        dealer_earnings -= hand.bet
-                        for matrix_idx in hand.matrix_index:
-                            self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
-                            # profit = 2 if hand.double else 1
-                            # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += profit
                     else:
                         if player_total > dealer_total:
                             hand.won()
+                            payout += hand.bet
                             outcomes.append(f"{player.name} Hand {j} wins with {player_total} > {dealer_total}.")
-                            player_earnings += hand.bet
-                            dealer_earnings -= hand.bet
-                            for matrix_idx in hand.matrix_index:
-                                self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
-                                # profit = 2 if hand.double else 1
-                                # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += profit
                         elif player_total < dealer_total:
                             hand.lost()
+                            payout -= hand.bet
                             outcomes.append(f"Dealer wins with {dealer_total} > {player_total}.")
-                            player_earnings -= hand.bet
-                            dealer_earnings += hand.bet
                         else:
                             hand.push()
                             outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
-                            for matrix_idx in hand.matrix_index:
-                                self.win_count_matrix[dealer_matrix_index, matrix_idx] += 0.5
-                                # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += 0.5
                 elif hand.hand_status == "PUSH":
                     outcomes.append(f"Push! {player.name} Hand {j} ties dealer at {player_total}.")
-                    for matrix_idx in hand.matrix_index:
-                        self.win_count_matrix[dealer_matrix_index, matrix_idx] += 0.5
-                        # self.total_profit_matrix[dealer_matrix_index, matrix_idx] += 0.5
                 else:
                     ## DEBUGGING
                     print(f"Unexpected hand status: {hand.hand_status}")
                     i = 1 / 0
                     return i
+                player_earnings += payout
+                dealer_earnings -= payout
+                for matrix_idx in hand.matrix_index:
+                    if payout > 0:
+                        self.profit_count_matrix[dealer_matrix_index, matrix_idx] += (payout + hand.bet)
+                        self.win_count_matrix[dealer_matrix_index, matrix_idx] += 1
+                    if payout == 0:
+                        self.profit_count_matrix[dealer_matrix_index, matrix_idx] += hand.bet
+                        self.win_count_matrix[dealer_matrix_index, matrix_idx] += 0.5
+
+            if player.insurance_bet > 0:
+                if self.dealer.hand.is_blackjack():
+                    player_earnings += player.insurance_bet * 2
+                    dealer_earnings -= player.insurance_bet * 2
+                    outcomes.append(f"{player.name} wins insurance bet")
+                else:
+                    player_earnings -= player.insurance_bet
+                    dealer_earnings += player.insurance_bet
+                    outcomes.append(f"{player.name} loses insurance bet")
+                player.insurance_bet = 0
             outcomes.append(f"{player.name} earned ${player_earnings}.")
             player.bankroll += player_earnings
         outcomes.append(f"Dealer earned ${dealer_earnings}.")
@@ -302,7 +284,7 @@ class BlackjackRound:
         return true_count
     
     def get_estimated_five_aces_true_count(self):
-        """Implement high low count"""
+        """Implement ace five count"""
         decks_left = self.shoe.decks_left()
         true_count = self.counter.get_five_aces_count() / decks_left
         return true_count

@@ -20,6 +20,7 @@ class Player:
         self.bankroll = bankroll
         self.min_bet = min_bet
         self.denominations = denominations
+        self.insurance_bet = 0
 
     def play_another_hand(self):
         name = self.name + "_" + "+TC"
@@ -49,7 +50,7 @@ class Player:
             if action:
                 return action
         # If 2 cards and pair
-        if len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till:
+        if len(hand.cards) == 2 and hand.is_pair() and len(self.hands) < resplit_till:
             action = self._pair_action(hand, up_val)
             if action:
                 return action  # if the strategy says "Split" or "Stand" or something
@@ -61,17 +62,6 @@ class Player:
         # Otherwise, hard
         return self._hard_action(hand.value, up_val, can_double=(len(hand.cards)==2))
 
-    def _is_pair(self, hand):
-        """Check if a 2-card hand is a pair or '10-value pair' (like K, Q)."""
-        if len(hand.cards) != 2:
-            return False
-
-        ranks = [card.rank for card in hand.cards]
-        # Check if both are 10/J/Q/K
-        if (ranks[0] in ["10", "J", "Q", "K"] 
-                and ranks[1] in ["10", "J", "Q", "K"]):
-            return True
-        return (ranks[0] == ranks[1])
 
     def _pair_action(self, hand, dealer_up_val):
         """
@@ -192,14 +182,14 @@ class Player:
         return "HIT"  # fallback
 
     def _deviations(self, hand, dealer_up_val, resplit_till, true_count):
-        if len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till and hand.value == 20:
+        if len(hand.cards) == 2 and hand.is_pair() and len(self.hands) < resplit_till and hand.value == 20:
             if true_count >= 4 and dealer_up_val == 6:
                 return "SPLIT"
             if true_count >= 5 and dealer_up_val == 5:
                 return "SPLIT"
             if true_count >= 6 and dealer_up_val == 4:
                 return "SPLIT"
-        elif len(hand.cards) == 2 and self._is_pair(hand) and len(self.hands) < resplit_till and hand.value == 18:
+        elif len(hand.cards) == 2 and hand.is_pair() and len(self.hands) < resplit_till and hand.value == 18:
             if true_count >= 3 and dealer_up_val == 7:
                 return "SPLIT"
         elif hand.value == 16:
@@ -258,10 +248,10 @@ class Player:
             return None
 
  
-    def insurance_bet(self, true_count):
+    def put_insurance_bet(self, true_count):
         if true_count >= 3.2:
             bet = self.hands[0].bet / 2
-            self.hands[0].put_insurance_bet(bet)
+            self.insurance_bet = bet
         return
     
     def put_bet_on_initial_hand(self, high_low_true_count, five_aces_true_count):

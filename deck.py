@@ -15,18 +15,6 @@ class Card:
         """
         self.rank = rank
         self.suit = suit
-
-    def __repr__(self):
-        """
-        Return a string representation of the card.
-        """
-        return f"{self.rank} of {self.suit}"
-
-    def __eq__(self, other):
-        """
-        Check if two cards are equal based on rank and suit.
-        """
-        return self.rank == other.rank and self.suit == other.suit
         
 def create_single_deck():
     """Create a list of (rank, suit) for one standard deck."""

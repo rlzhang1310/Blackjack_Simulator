@@ -15,11 +15,11 @@ class Hand:
         if self.cards:
             self.evaluate()
 
-        self.insurance_bet = 0
         self.bet = bet
         self.hand_status = "ACTIVE"
         self.matrix_index = set()
         self.double = False
+        self.was_split = False
     def evaluate(self):
         """
         Calculates and updates:
@@ -106,9 +106,6 @@ class Hand:
         self.hand_status = "ACTIVE"
         self.bet = 0
 
-    def put_insurance_bet(self, bet):
-        self.insurance_bet = bet
-
     def put_initial_bet(self, bet):
         self.bet = bet
 
@@ -123,17 +120,20 @@ class Hand:
         new_hand.bet = self.bet
         new_hand.hand_status = "ACTIVE"
         new_hand.matrix_index = self.matrix_index.copy()
+        self.was_split = True
+        new_hand.was_split = True
         return new_hand
     
     def is_pair(self):
-        value_map = {
-            "A": 11, "K": 10, "Q": 10, "J": 10, "10": 10,
-            "9": 9,  "8": 8,  "7": 7,  "6": 6,
-            "5": 5,  "4": 4,  "3": 3,  "2": 2
-        }
-        if len(self.cards) == 2 and value_map[self.cards[0].rank] == value_map[self.cards[1].rank]:
+        if len(self.cards) != 2:
+            return False
+
+        ranks = [card.rank for card in self.cards]
+        # Check if both are 10/J/Q/K
+        if (ranks[0] in ["10", "J", "Q", "K"] 
+                and ranks[1] in ["10", "J", "Q", "K"]):
             return True
-        return False
+        return (ranks[0] == ranks[1])
     
     def get_player_matrix_index(self):
         value_map = {

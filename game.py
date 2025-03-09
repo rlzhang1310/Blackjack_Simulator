@@ -28,6 +28,7 @@ class Game:
         self.win_count_matrix = np.zeros((10, 35))
         self.profit_count_matrix = np.zeros((10, 35))
         self.total_count_matrix = np.zeros((10, 35))
+        self.total_profit_matrix = np.zeros((10, 35))
 
         # [TODO] implement total number of splits
 
@@ -58,6 +59,7 @@ class Game:
             self.win_count_matrix += round.win_count_matrix
             self.profit_count_matrix += round.profit_count_matrix
             self.total_count_matrix += round.total_count_matrix
+            self.total_profit_matrix += round.total_profit_matrix
             data_collector.append(round.dealer_profit)
             if self.shoe.reshuffle_needed:
                 # print(self.counter.get_high_low_count())

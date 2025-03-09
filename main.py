@@ -17,11 +17,13 @@ if __name__ == "__main__":
     games = []
     num_players = 1
     num_games = 1
-    bet_size = 10
-    num_rounds = 5000
+    bet_size = 1000
+    num_rounds = 200
     win_count_matrix = np.zeros((10, 35))
     profit_count_matrix = np.zeros((10, 35))
     total_count_matrix = np.zeros((10, 35))
+    total_profit_matrix = np.zeros((10, 35))
+
     for _ in range(num_games):
         game = Game(num_decks=8, num_players=num_players, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet=bet_size, denominations=100, player_bankroll=0, resplit_till=4)
         for player in game.players:
@@ -33,17 +35,18 @@ if __name__ == "__main__":
         win_count_matrix += game.win_count_matrix
         profit_count_matrix += game.profit_count_matrix
         total_count_matrix += game.total_count_matrix
-
+        total_profit_matrix += game.total_profit_matrix
 
     # win_percentage_matrix = np.divide(win_count_matrix, total_count_matrix, out=np.zeros_like(win_count_matrix), where=total_count_matrix != 0)
     # print(win_percentage_matrix[:, 17:25])
-    print("total_count_matrix")
-    for row in total_count_matrix:
-        print(" ".join(f"{value:2.0f}" for value in row))
-
-    print("win_count_matrix")
-    for row in win_count_matrix:
-        print(" ".join(f"{value:2.0f}" for value in row))
+    print("total_profit_matrix")
+    # for row in total_profit_matrix:
+    #     print(" ".join(f"{value:2.0f}" for value in row))
+    print(total_profit_matrix[:, 24])
+    print("profit_count_matrix")
+    # for row in profit_count_matrix:
+    #     print(" ".join(f"{value:2.0f}" for value in row))
+    print(profit_count_matrix[:, 24])
 
     sum = 0
     wins = 0
