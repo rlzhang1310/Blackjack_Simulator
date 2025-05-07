@@ -13,8 +13,8 @@ BLACKJACKSIXTOFIVEPAYOUT = 1.2
 
 class Game:
     def __init__(self, num_decks, num_players: int=1, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, resplit_till=4, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet: int=10, denominations=10, player_bankroll=0):
-        # self.shoe = BlackjackShoe(num_decks)
         self.shoe = BlackjackShoe(num_decks)
+        # self.shoe = BlackjackShoe(num_decks, penetration=0.75)
         self.num_decks = num_decks  # Number of decks in the shoe
         self.num_players = num_players
         self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations) for i in range(num_players)]
@@ -29,12 +29,13 @@ class Game:
         self.profit_count_matrix = np.zeros((10, 35))
         self.total_count_matrix = np.zeros((10, 35))
         self.total_profit_matrix = np.zeros((10, 35))
+        self.count_data_collector = defaultdict(list)
+
 
         # [TODO] implement total number of splits
 
     def play(self, games=10, print_round_results=False, print_cards=False):
         data_collector = []
-
         # bust = defaultdict(int) # dictionary to keep track of number of times a dealer busts
         # total = defaultdict(int) # dictionary to keep track of number of times a dealer showed a suit
         # blackjacks = 0  # Counter for number of blackjacks in the game
@@ -52,15 +53,16 @@ class Game:
                 player.new_hand()
                 player.put_bet_on_initial_hand(high_low_true_count, five_aces_true_count)
             self.dealer.new_hand()
-            round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till, counter=self.counter)
-            results = round.play_round()
-            self.house_bankroll += round.dealer_profit
+            game_round = BlackjackRound(self.shoe, players=self.players, dealer=self.dealer, blackjack_payout=self.blackjack_payout, print_cards=print_cards ,resplit_till=self.resplit_till, counter=self.counter)
+            results = game_round.play_round()
+            self.house_bankroll += game_round.dealer_profit
             # updating matricies
-            self.win_count_matrix += round.win_count_matrix
-            self.profit_count_matrix += round.profit_count_matrix
-            self.total_count_matrix += round.total_count_matrix
-            self.total_profit_matrix += round.total_profit_matrix
-            data_collector.append(round.dealer_profit)
+            self.win_count_matrix += game_round.win_count_matrix
+            self.profit_count_matrix += game_round.profit_count_matrix
+            self.total_count_matrix += game_round.total_count_matrix
+            self.total_profit_matrix += game_round.total_profit_matrix
+            self.count_data_collector[round(high_low_true_count)].append(game_round.dealer_profit)
+            data_collector.append(game_round.dealer_profit)
             if self.shoe.reshuffle_needed:
                 # print(self.counter.get_high_low_count())
                 # print(self.shoe.cards[self.shoe.deal_index:])
@@ -87,7 +89,7 @@ class Game:
         # print(f"bust percentage for each rank")
         # for rank in sorted(total.keys()):
         #     print(f"{rank}: {bust[rank] / total[rank]}")
-        return data_collector
+        return data_collector, self.count_data_collector
     
 
     def get_estimated_high_low_true_count(self):
