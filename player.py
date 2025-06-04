@@ -5,7 +5,7 @@ class Player:
     """
     A Blackjack Player with a specific strategy.
     """
-    def __init__(self, name, strategy, bankroll, hands, min_bet=10, denominations=10, high_low_counting=False, ace_five_counting=False):
+    def __init__(self, name, strategy, bankroll, hands=[Hand()], min_bet=10, denominations=10, high_low_counting=False, ace_five_counting=False, playing_deviations=False, playing_two_hands_with_high_true_count=False):
         """
         :param name: A string to identify this player
         :param strategy: An object implementing .get_action(hand, dealer_card)
@@ -17,6 +17,8 @@ class Player:
         self.hard_strategy = strategy["HARD"]
         self.high_low_counting = high_low_counting
         self.ace_five_counting = ace_five_counting
+        self.playing_deviations = playing_deviations
+        self.playing_two_hands_with_high_true_count = playing_two_hands_with_high_true_count
         self.bankroll = bankroll
         self.min_bet = min_bet
         self.denominations = denominations
@@ -45,7 +47,7 @@ class Player:
         # Dealer upcard as integer (2..11)
         up_val = dealer_upcard_value(dealer_card)
 
-        if self.high_low_counting:
+        if self.high_low_counting and self.playing_deviations:
             action = self._deviations(hand, up_val, resplit_till, true_count)
             if action:
                 return action

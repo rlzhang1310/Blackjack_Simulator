@@ -12,12 +12,12 @@ BLACKJACKTHREETOTWOPAYOUT = 1.5
 BLACKJACKSIXTOFIVEPAYOUT = 1.2
 
 class Game:
-    def __init__(self, num_decks, num_players: int=1, strategy=StrategyTable["MULTIDECK"], hit_on_soft_17=True, resplit_till=4, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet: int=10, denominations=10, player_bankroll=0):
+    def __init__(self, num_decks, players, hit_on_soft_17=True, resplit_till=4, blackjack_payout=BLACKJACKTHREETOTWOPAYOUT, min_bet: int=10, denominations=10):
         self.shoe = BlackjackShoe(num_decks)
         # self.shoe = BlackjackShoe(num_decks, penetration=0.75)
         self.num_decks = num_decks  # Number of decks in the shoe
-        self.num_players = num_players
-        self.players = [Player(name=f"Player {i}", strategy=strategy, bankroll=player_bankroll, hands=[Hand()], min_bet=min_bet, denominations=denominations) for i in range(num_players)]
+        self.num_players = len(players)
+        self.players = players
         self.dealer = Dealer(hit_on_soft_17=hit_on_soft_17, hand=Hand())
         self.resplit_till = resplit_till
         self.blackjack_payout = blackjack_payout
@@ -42,7 +42,7 @@ class Game:
         for _ in range(games):
             high_low_true_count = self.get_estimated_high_low_true_count()
             five_aces_true_count = self.get_estimated_five_aces_true_count()
-            if high_low_true_count > 1 and self.players[0].high_low_counting:
+            if high_low_true_count > 1 and self.players[0].high_low_counting and self.players[0].playing_two_hands_with_high_true_count:
                 # for _ in range(int(high_low_true_count)):
                 # if len(self.players) != self.num_players:
                 #     print(len(self.players))
